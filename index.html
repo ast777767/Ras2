@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Quiet Routes Astana — Тихие маршруты для Астаны</title>
+<meta name="description" content="Quiet Routes Astana — спокойные маршруты, тихие места, поддержка и краудсорсинг для людей с РАС в Астане." />
+<style>
+  :root{
+    --bg:#f7f5fb; --card:#ffffff; --ink:#1f2430; --muted:#6a7280; --border:#e6e1ff;
+    --accent:#6b5ae0; --accent-2:#18a999;
+    --danger:#e03b5a; --warn:#e0a75a; --soft:#efeaff;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",Roboto,Arial;}
+  a{color:var(--accent); text-decoration:none}
+  a:hover{text-decoration:underline}
+  header{position:sticky; top:0; z-index:100; background:#fff; border-bottom:1px solid var(--border)}
+  .topbar{max-width:1200px; margin:0 auto; padding:10px 14px; display:flex; align-items:center; gap:12px}
+  .logo{font-weight:800; letter-spacing:.2px}
+  nav{margin-left:auto; display:flex; flex-wrap:wrap; gap:10px}
+  nav a{padding:8px 10px; border-radius:10px; border:1px solid var(--border); background:#fff; font-weight:600; font-size:14px}
+  nav a.active{background:var(--soft); border-color:#cfc6ff}
+  main{max-width:1200px; margin:0 auto; padding:14px; min-height:calc(100% - 56px)}
+  .grid{display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:10px}
+  .row{display:flex; gap:10px; flex-wrap:wrap}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:14px; padding:12px; box-shadow:0 1px 2px rgba(20,10,60,.04)}
+  h1{font-size:22px; margin:8px 0}
+  h2{font-size:18px; margin:8px 0}
+  label{font-size:13px; color:var(--muted); display:block; margin-bottom:4px}
+  input, select, button, textarea{
+    width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:12px; background:#fff; font-size:15px;
+  }
+  textarea{min-height:100px}
+  .btn{background:var(--accent); color:#fff; border:none; border-radius:12px; padding:10px 12px; font-weight:700; cursor:pointer}
+  .btn.secondary{background:#fff; color:var(--accent); border:1px solid var(--border)}
+  .btn.ghost{background:transparent; border:1px dashed #cfc6ff; color:#6a7280}
+  .pill{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid var(--border); background:#fff; font-size:12px}
+  .pill .dot{width:8px; height:8px; border-radius:50%; background:var(--accent-2)}
+  .pill.warn .dot{background:var(--warn)} .pill.danger .dot{background:var(--danger)}
+  .muted{color:var(--muted); font-size:13px}
+  .notice{background:#f8fafc; border:1px solid #e6eef8; border-radius:12px; padding:10px; color:#41566b; font-size:13px}
+  .map{position:relative; width:100%; height:360px; background:#e9eef6; border:1px solid #cfd7e6; border-radius:14px; overflow:hidden}
+  .map .legend{position:absolute; right:10px; top:10px; background:#ffffffcc; border:1px solid #e6eef8; border-radius:8px; padding:6px 8px; font-size:12px}
+  .map svg{position:absolute; inset:0}
+  footer{max-width:1200px; margin:20px auto 40px; padding:0 14px; color:var(--muted); font-size:12px}
+  .chips{display:flex; gap:8px; flex-wrap:wrap}
+  .chip{padding:8px 10px; border:1px solid var(--border); border-radius:999px; font-size:13px; cursor:pointer; background:#fff}
+  .chip.active{background:var(--soft); border-color:#cfc6ff}
+  .hidden{display:none !important}
+  .split{display:grid; grid-template-columns:1.2fr .8fr; gap:10px}
+  @media(max-width:900px){ .split{grid-template-columns:1fr} }
+  .hero{display:grid; grid-template-columns:1.2fr .8fr; gap:12px}
+  @media(max-width:900px){ .hero{grid-template-columns:1fr} }
+  .titlebar{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+  .titlebar h1{margin:0}
+  .meter{background:#ede9ff; border-radius:10px; overflow:hidden; height:10px}
+  .meter>div{height:100%; width:0%; background:linear-gradient(90deg,#6b5ae0,#8f7fff)}
+  .list{display:grid; grid-template-columns:1fr; gap:8px}
+  .avatar{width:54px;height:54px;border-radius:12px;background:linear-gradient(135deg,#e8e5ff,#f6f5ff);border:1px solid #e6e1ff;display:flex;align-items:center;justify-content:center;font-weight:800;color:#6b5ae0}
+  .kbd{font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12px; border:1px solid #e6e1ff; padding:2px 6px; border-radius:6px; background:#fff}
+  .quiet-theme{filter:brightness(.95) saturate(.9)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="topbar">
+    <div class="logo">Quiet Routes · Astana</div>
+    <nav id="nav">
+      <a href="#/" data-view="home">Главная</a>
+      <a href="#/routes" data-view="routes">Маршрут</a>
+      <a href="#/places" data-view="places">Тихие места</a>
+      <a href="#/planner" data-view="planner">Планировщик</a>
+      <a href="#/alarm" data-view="alarm">Тревога</a>
+      <a href="#/volunteer" data-view="volunteer">Волонтёры</a>
+      <a href="#/crowd" data-view="crowd">Краудсорсинг</a>
+      <a href="#/about" data-view="about">О проекте</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- HOME -->
+  <section id="view-home" class="view">
+    <div class="hero">
+      <div class="card">
+        <div class="titlebar">
+          <h1>Астана: выбираем спокойный путь</h1>
+          <span class="pill"><span class="dot"></span> пилот</span>
+          <button class="btn secondary" id="toggleQuiet">Тихая тема</button>
+        </div>
+        <p>Quiet Routes — это альтернативные пешеходные маршруты, которые <strong>избегают шумных/многолюдных/ярких</strong> зон и подбирают <strong>тихие места</strong> по пути. Создано с заботой о людях с РАС и высокой сенсорной чувствительностью.</p>
+        <ul>
+          <li>Маршрут A→B с «сенсорным» фильтром.</li>
+          <li>Тихие точки: <em>Керуен, Хан Шатыр (тихие зоны), Ботанический сад, Бәйтерек, Набережная Есиля</em> и др. (демо).</li>
+          <li>Планировщик времени (когда идти спокойнее).</li>
+          <li>Тревога/волонтёры + проверка на месте.</li>
+          <li>Краудсорсинг: добавляйте и оценивайте тихие места.</li>
+        </ul>
+        <div class="notice">Демо-версия работает офлайн. Данные и карта макетные; реальную интеграцию можно сделать через 2ГИС/OSM.</div>
+      </div>
+      <div class="card">
+        <div class="map" aria-label="Карта Астаны (макет)">
+          <div class="legend">Синие — тихие коридоры · Красные — шумно · Жёлтые — яркие экраны</div>
+          <svg viewBox="0 0 600 360" preserveAspectRatio="none">
+            <g fill="#e6edf7" stroke="#cfd7e6"><rect x="10" y="10" width="580" height="340" rx="16"/></g>
+            <path d="M0,200 C150,210 250,180 600,210" stroke="#9ed0ff" stroke-width="14" fill="none" opacity=".8"/>
+            <g fill="#e03b5a"><circle cx="200" cy="100" r="36" opacity=".18"/><circle cx="460" cy="120" r="40" opacity=".18"/></g>
+            <g fill="#ffd54f"><rect x="370" y="150" width="60" height="26" opacity=".2"/></g>
+            <g stroke="#6b5ae0" stroke-width="4" fill="none">
+              <path d="M80,300 C180,260 280,240 380,220 460,200 520,190 560,180"/>
+              <path d="M120,260 C200,240 260,220 330,210" stroke-dasharray="6 6"/>
+            </g>
+          </svg>
+        </div>
+        <div class="muted" style="margin-top:6px">Пилотные зоны: Левый берег — Есиль, Бәйтерек, Хан Шатыр, ЭКСПО; Правый берег — Набережная, Жастар.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ROUTES -->
+  <section id="view-routes" class="view hidden">
+    <div class="split">
+      <div class="card">
+        <h2>Маршрут A → B (тихий)</h2>
+        <div class="row">
+          <div><label>Откуда</label><input id="from" value="ул. Манаса 17"/></div>
+          <div><label>Куда</label><input id="to" value="Поликлиника №9"/></div>
+        </div>
+        <div class="row" style="margin-top:6px">
+          <div class="chip active" data-k="noise">чувств. к шуму</div>
+          <div class="chip active" data-k="crowd">к толпе</div>
+          <div class="chip" data-k="light">к яркому свету</div>
+          <div class="chip" data-k="cross">к крупным перекрёсткам</div>
+        </div>
+        <div class="row" style="margin-top:6px">
+          <div class="chip active" data-k="parks">предпочитать парки</div>
+          <div class="chip active" data-k="yards">дворовые проходы</div>
+          <div class="chip" data-k="paths">пешеходные дорожки</div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button class="btn" id="build">Построить тихий маршрут</button>
+          <button class="btn secondary" id="alt">Альтернатива</button>
+        </div>
+        <div class="map" style="margin-top:10px">
+          <div class="legend">Тихие — сплошная · Нейтральные — пунктир · Избегать — красный</div>
+          <svg viewBox="0 0 600 360" preserveAspectRatio="none">
+            <g id="heatLoud" fill="#e03b5a"><circle cx="460" cy="100" r="44" opacity=".18"/><rect x="10" y="320" width="580" height="24" rx="12" opacity=".16"/></g>
+            <g id="heatLight" fill="#ffd54f"><rect x="260" y="180" width="70" height="26" opacity=".16"/></g>
+            <g id="corridors" stroke="#6b5ae0" stroke-width="4" fill="none">
+              <path id="seg1" d="M40,300 C140,260 200,230 300,210" />
+              <path id="seg2" d="M300,210 C360,200 420,180 520,160" stroke-dasharray="6 6"/>
+              <path id="segBad" d="M10,340 L590,340" stroke="#e03b5a66" stroke-width="6"/>
+            </g>
+            <g id="routeLine" stroke="#6b5ae0" stroke-width="5" fill="none">
+              <path id="rMain" d="M40,300 C140,260 200,230 300,210 360,200 420,180 520,160" />
+              <circle cx="40" cy="300" r="6" fill="#18a999"/>
+              <circle cx="520" cy="160" r="6" fill="#18a999"/>
+            </g>
+          </svg>
+        </div>
+        <div class="notice" style="margin-top:8px">Алгоритм демо: штрафует магистрали и «горячие точки», поощряет парки/дворы; учитывает текущий час.</div>
+      </div>
+      <div class="card">
+        <h2>Шаги</h2>
+        <div id="steps" class="list">
+          <div class="card" style="border-style:dashed"><strong>Через двор</strong><div class="muted">150 м · низкий шум</div></div>
+          <div class="card" style="border-style:dashed"><strong>Через парк</strong><div class="muted">500 м · зелёная зона</div></div>
+          <div class="card" style="border-style:dashed"><strong>Небольшая улица</strong><div class="muted">300 м · возможно шумно вечером</div></div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button class="btn secondary" id="startNav">Запустить навигацию</button>
+          <button class="btn ghost" id="exportRoute">Экспорт .txt</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLACES -->
+  <section id="view-places" class="view hidden">
+    <div class="split">
+      <div class="card">
+        <h2>Тихие места (Астана)</h2>
+        <div class="row">
+          <div class="chip active" data-f="open">Открыты сейчас</div>
+          <div class="chip" data-f="music">Без музыки</div>
+          <div class="chip" data-f="light">Мягкий свет</div>
+          <div class="chip" data-f="wc">Санузел</div>
+        </div>
+        <div id="placeList" class="list" style="margin-top:8px"></div>
+      </div>
+      <div class="card">
+        <h2>Карта</h2>
+        <div class="map">
+          <div class="legend">Маркеры — тихие точки пилота</div>
+          <svg viewBox="0 0 600 360" preserveAspectRatio="none">
+            <g fill="#e6edf7" stroke="#cfd7e6"><rect x="10" y="10" width="580" height="340" rx="16"/></g>
+            <path d="M0,200 C150,210 250,180 600,210" stroke="#9ed0ff" stroke-width="14" fill="none" opacity=".8"/>
+            <g id="poiLayer" fill="#18a999" stroke="#fff" stroke-width="2"></g>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLANNER -->
+  <section id="view-planner" class="view hidden">
+    <div class="split">
+      <div class="card">
+        <h2>Планировщик визита</h2>
+        <div class="row">
+          <div><label>Дата</label><input type="date" id="pDate"/></div>
+          <div><label>Время</label><input type="time" id="pTime" value="11:00"/></div>
+        </div>
+        <div class="row" style="margin-top:6px">
+          <div><label>Точка A</label><input id="pA" value="Дом (Сарыарка)"/></div>
+          <div><label>Точка B</label><input id="pB" value="Клиника на Керей-Жанибек хандар"/></div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button class="btn" id="pSuggest">Подобрать тихое окно</button>
+          <button class="btn secondary" id="pSave">Сохранить</button>
+          <button class="btn ghost" id="pExport">Экспорт .txt</button>
+        </div>
+        <div id="pOut" class="muted" style="margin-top:6px"></div>
+      </div>
+      <div class="card">
+        <h2>Чек-лист</h2>
+        <div class="chips">
+          <div class="chip active">Наушники</div>
+          <div class="chip active">Солнечные очки</div>
+          <div class="chip">Тихий режим телефона</div>
+          <div class="chip">Вода/перекус</div>
+        </div>
+        <div class="notice" style="margin-top:8px">Напоминание появится за 30 мин (демо).</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ALARM -->
+  <section id="view-alarm" class="view hidden">
+    <div class="split">
+      <div class="card">
+        <h2>Тревога</h2>
+        <p>Если чувствуете, что нужна помощь — отправьте геолокацию. Волонтёр будет рядом в ближайшее время.</p>
+        <div class="row">
+          <button class="btn danger" id="aSend">Отправить геолокацию</button>
+          <button class="btn" id="aShare">Поделиться маршрутом</button>
+        </div>
+        <div id="aStatus" class="notice" style="margin-top:8px">Ожидается отправка…</div>
+      </div>
+      <div class="card">
+        <h2>Волонтёр в пути</h2>
+        <div class="row" style="justify-content:space-between; align-items:center">
+          <div class="pill"><span class="dot"></span> статус: ожидание</div>
+          <div class="muted">обновление: —</div>
+        </div>
+        <div class="meter" style="margin-top:8px"><div id="aProg" style="width:0%"></div></div>
+        <div class="row" style="margin-top:8px">
+          <button class="btn" id="aHelp">Показать советы</button>
+          <button class="btn secondary" id="aMeet">Точка встречи</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VOLUNTEER -->
+  <section id="view-volunteer" class="view hidden">
+    <div class="grid">
+      <div class="card">
+        <h2>Входящий вызов (волонтёр)</h2>
+        <p class="muted">Как видит вызов волонтёр: мини-карта, приоритет, ETA, ответы.</p>
+        <button class="btn" id="vOpen">Открыть экран волонтёра</button>
+      </div>
+      <div class="card">
+        <h2>Проверка волонтёра</h2>
+        <div class="row">
+          <input id="code" placeholder="Код-слово от приложения"/>
+          <button class="btn secondary" id="codeOk">Проверить</button>
+        </div>
+        <div id="codeOut" class="muted" style="margin-top:6px"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CROWD -->
+  <section id="view-crowd" class="view hidden">
+    <div class="grid">
+      <div class="card">
+        <h2>Добавить тихое место</h2>
+        <div class="row">
+          <input id="cName" placeholder="Название (напр. Кафе «Лимон»)"/>
+          <input id="cAddr" placeholder="Адрес/ориентир (Астана)"/>
+        </div>
+        <div class="row">
+          <div class="chip" data-c="music">Без музыки</div>
+          <div class="chip" data-c="light">Мягкий свет</div>
+          <div class="chip" data-c="wc">Санузел</div>
+          <div class="chip" data-c="seats">Спокойные места</div>
+        </div>
+        <textarea id="cDesc" placeholder="Почему тихо? Где лучше сидеть? Когда лучше приходить?"></textarea>
+        <div class="row"><button class="btn" id="cSend">Отправить</button><button class="btn secondary" id="cClear">Очистить</button></div>
+        <div id="cOut" class="muted" style="margin-top:6px"></div>
+      </div>
+
+      <div class="card">
+        <h2>Оценить место</h2>
+        <div class="row"><input id="rPlace" placeholder="Название места"/></div>
+        <label>Шум</label><input id="rN" type="range" min="0" max="100" value="15">
+        <label>Толпа</label><input id="rC" type="range" min="0" max="100" value="20">
+        <label>Свет</label><input id="rL" type="range" min="0" max="100" value="10">
+        <textarea id="rTxt" placeholder="Комментарий (необязательно)"></textarea>
+        <div class="row"><button class="btn" id="rSend">Отправить оценку</button></div>
+        <div id="rOut" class="muted" style="margin-top:6px"></div>
+      </div>
+
+      <div class="card">
+        <h2>Жалоба / громкая точка</h2>
+        <div class="row"><input id="gWhere" placeholder="Где? (ТРЦ, вход и т. п.)"/></div>
+        <textarea id="gWhat" placeholder="Что происходит? (громкая музыка, яркие экраны…)"></textarea>
+        <div class="row">
+          <select id="gType"><option>шум</option><option>толпа</option><option>свет</option></select>
+          <select id="gWhen"><option>утро</option><option selected>день</option><option>вечер</option><option>ночь</option></select>
+        </div>
+        <button class="btn" id="gSend" style="margin-top:6px">Отправить жалобу</button>
+        <div id="gOut" class="muted" style="margin-top:6px"></div>
+      </div>
+
+      <div class="card">
+        <h2>Лента / модерация</h2>
+        <div class="row"><input id="mQ" placeholder="Поиск по ленте"/><select id="mSort"><option value="new">новые</option><option value="calm">спокойные</option><option value="stress">проблемные</option></select></div>
+        <div id="mFeed" class="list" style="margin-top:8px"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section id="view-about" class="view hidden">
+    <div class="grid">
+      <div class="card">
+        <h2>О проекте</h2>
+        <p>Quiet Routes Astana — некоммерческая инициатива. Цель — сделать передвижение по городу комфортнее для людей с расстройствами аутистического спектра и всех, кому важно снизить сенсорную нагрузку.</p>
+        <p>Пилотные районы — Левый/Правый берег, ключевые POI: Бәйтерек, Хан Шатыр, EXPO, Ботанический сад, Набережная Есиля, «Керуен», «Mega Silk Way».</p>
+        <div class="notice">Конфиденциальность: геоданные в этой демо-версии не отправляются на сервер. Все отправки — имитация и сохраняются локально (localStorage).</div>
+      </div>
+      <div class="card">
+        <h2>Команда/партнёры</h2>
+        <ul>
+          <li>Сообщество волонтёров и родителей детей с РАС.</li>
+          <li>Партнёры: библиотеки, парки, клиники, заведения без музыки.</li>
+          <li>Технологии: 2ГИС/OSM для карт; простая «сенсорная» маршрутизация поверх.</li>
+        </ul>
+        <p>Хотите помочь? Добавляйте тихие места, отмечайте громкие точки, делитесь прототипом.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  Quiet Routes Astana · демо · 2025 · Контакты: hello@quietroutes.demo · Этот файл можно открыть офлайн в любом браузере.
+</footer>
+
+<script>
+  // ---- Router ----
+  const routes = ["home","routes","places","planner","alarm","volunteer","crowd","about"];
+  function show(view){
+    routes.forEach(v=>document.getElementById('view-'+v).classList.add('hidden'));
+    document.getElementById('view-'+view).classList.remove('hidden');
+    document.querySelectorAll('nav a').forEach(a=>a.classList.toggle('active', a.dataset.view===view));
+    localStorage.setItem('qr_last_view', view);
+  }
+  function parseRoute(){
+    const h = location.hash.replace(/^#\\//,'') || 'home';
+    const v = routes.includes(h) ? h : 'home';
+    show(v);
+  }
+  window.addEventListener('hashchange', parseRoute);
+  parseRoute();
+  const last = localStorage.getItem('qr_last_view'); if(last) show(last);
+
+  // Quiet theme toggle
+  document.getElementById('toggleQuiet').addEventListener('click', ()=> document.body.classList.toggle('quiet-theme'));
+
+  // ---- Routes logic (demo) ----
+  const chipsRoute = Array.from(document.querySelectorAll('#view-routes .chip'));
+  chipsRoute.forEach(ch => ch.addEventListener('click', ()=> ch.classList.toggle('active')));
+  function currentProfile(){
+    const on = chipsRoute.filter(c=>c.classList.contains('active')).map(c=>c.dataset.k);
+    return { noise:on.includes('noise'), crowd:on.includes('crowd'), light:on.includes('light'), cross:on.includes('cross'),
+             parks:on.includes('parks'), yards:on.includes('yards'), paths:on.includes('paths') };
+  }
+  function timeBucket(){
+    const h = new Date().getHours();
+    if(h>=6 && h<10) return 'утро'; if(h>=10 && h<16) return 'день'; if(h>=16 && h<20) return 'вечер'; return 'ночь';
+  }
+  function buildQuiet(){
+    const pr = currentProfile(); const bucket = timeBucket();
+    let w = { park:1.0, yard:1.1, foot:1.2, street:1.6, big:2.1, screens:2.4 };
+    if(pr.noise){ w.street+=0.3; w.big+=0.5; }
+    if(pr.crowd){ w.street+=0.3; w.big+=0.4; }
+    if(pr.light){ w.screens+=0.6; }
+    if(pr.cross){ w.big+=0.6; }
+    if(pr.parks) w.park-=0.2; if(pr.yards) w.yard-=0.1; if(pr.paths) w.foot-=0.1;
+    if(bucket==='вечер'){ w.street+=0.2; } if(bucket==='утро'){ w.park-=0.1; }
+    document.getElementById('seg1').setAttribute('stroke-dasharray', w.park+w.yard < 2.3 ? '' : '6 6');
+    document.getElementById('seg2').setAttribute('stroke-dasharray', w.foot < 1.25 ? '' : '6 6');
+    document.getElementById('segBad').setAttribute('stroke', (w.street+w.big>3.6) ? '#e03b5a88' : '#e0a75a88');
+    const steps = document.getElementById('steps');
+    steps.innerHTML = `
+      <div class="card"><strong>Через двор/вдоль домов</strong><div class="muted">вес ${(w.yard).toFixed(1)}</div></div>
+      <div class="card"><strong>Тропа через парк</strong><div class="muted">${bucket}, ожидание людей — низкое · вес ${(w.park).toFixed(1)}</div></div>
+      <div class="card"><strong>Небольшая улица</strong><div class="muted">минимум витрин · вес ${(w.street).toFixed(1)}</div></div>`;
+  }
+  document.getElementById('build').addEventListener('click', buildQuiet);
+  document.getElementById('alt').addEventListener('click', ()=>{
+    document.getElementById('seg2').setAttribute('stroke-dasharray','8 8');
+    alert('Показ альтернативного участка (демо)');
+  });
+  document.getElementById('exportRoute').addEventListener('click', ()=>{
+    const txt = 'Маршрут A→B (тихий): двор → парк → малая улица. Настройки: '+JSON.stringify(currentProfile());
+    const blob = new Blob([txt], {type:'text/plain'}); const url=URL.createObjectURL(blob);
+    const a = Object.assign(document.createElement('a'), {href:url, download:'quiet_route.txt'}); document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  });
+  document.getElementById('startNav').addEventListener('click', ()=>{
+    location.hash = '#/alarm'; alert('Демо: навигация запущена, в «Тревоге» можно позвать волонтёра.');
+  });
+
+  // ---- Places (Astana POIs) ----
+  const poi = [
+    {name:'Бәйтерек', addr:'пл. Независимости', tags:['park'], open:true, stress:0.12, x:420,y:120},
+    {name:'Ботанический сад', addr:'ул. Туркестан', tags:['park','light'], open:true, stress:0.08, x:520,y:180},
+    {name:'Хан Шатыр (тихая зона)', addr:'просп. Туран', tags:['music','light'], open:true, stress:0.20, x:350,y:110},
+    {name:'Mega Silk Way (тихая зона)', addr:'EXPO', tags:['light'], open:true, stress:0.22, x:560,y:150},
+    {name:'Набережная Есиля', addr:'левый берег', tags:['park'], open:true, stress:0.10, x:250,y:210},
+    {name:'Библиотека №3', addr:'Сарыарка', tags:['music'], open:true, stress:0.09, x:180,y:220},
+    {name:'Керуен (кафе без музыки)', addr:'просп. Достык', tags:['music','light'], open:true, stress:0.18, x:400,y:150},
+  ];
+  const fChips = Array.from(document.querySelectorAll('#view-places .chip'));
+  fChips.forEach(ch=> ch.addEventListener('click', ()=>{ ch.classList.toggle('active'); renderPlaces(); }));
+  function renderPlaces(){
+    const on = fChips.filter(c=>c.classList.contains('active')).map(c=>c.dataset.f);
+    let list = poi.filter(p => (on.includes('open')?p.open:true)
+      && (!on.includes('music') || p.tags.includes('music'))
+      && (!on.includes('light') || p.tags.includes('light'))
+      && (!on.includes('wc') || p.tags.includes('wc'))).sort((a,b)=>a.stress-b.stress);
+    const box = document.getElementById('placeList'); box.innerHTML='';
+    list.forEach(p=>{
+      const el = document.createElement('div'); el.className='card';
+      const label = p.stress<0.15?'очень низкий':(p.stress<0.3?'низкий':'средний');
+      el.innerHTML = `<strong>${p.name}</strong>
+        <div class="muted">${p.addr}</div>
+        <div style="margin-top:6px" class="pill"><span class="dot"></span> стресс: ${(p.stress*100|0)} · ${label}</div>
+        <div class="row" style="margin-top:8px">
+          <button class="btn">Идти сюда</button>
+          <button class="btn secondary">Добавить отзыв</button>
+        </div>`;
+      box.appendChild(el);
+    });
+    const mk = document.getElementById('poiLayer'); mk.innerHTML='';
+    list.forEach(p=>{
+      const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      c.setAttribute('cx', p.x); c.setAttribute('cy', p.y); c.setAttribute('r', 6); mk.appendChild(c);
+    });
+  }
+  renderPlaces();
+
+  // ---- Planner ----
+  const d = new Date(); document.getElementById('pDate').value = d.toISOString().split('T')[0];
+  document.getElementById('pSuggest').addEventListener('click', ()=>{
+    const wd = [0,6].includes(new Date(document.getElementById('pDate').value).getDay());
+    const win = wd ? '09:00–11:00' : '10:30–12:00 или 14:30–16:30';
+    document.getElementById('pOut').textContent = 'Рекомендованное тихое окно: '+win+'. Добавьте наушники/очки.';
+  });
+  document.getElementById('pSave').addEventListener('click', ()=>{
+    const rec = {date:document.getElementById('pDate').value, time:document.getElementById('pTime').value, A:document.getElementById('pA').value, B:document.getElementById('pB').value};
+    localStorage.setItem('qr_plan', JSON.stringify(rec));
+    document.getElementById('pOut').textContent = 'Сохранено: '+rec.date+' '+rec.time+' · '+rec.A+' → '+rec.B;
+  });
+  document.getElementById('pExport').addEventListener('click', ()=>{
+    const txt = document.getElementById('pOut').textContent || 'Сначала сохраните маршрут';
+    const blob = new Blob([txt], {type:'text/plain'}); const url=URL.createObjectURL(blob);
+    const a = Object.assign(document.createElement('a'), {href:url, download:'plan.txt'}); document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  });
+
+  // ---- Alarm & volunteer ----
+  document.getElementById('aSend').addEventListener('click', ()=>{
+    document.getElementById('aStatus').textContent = 'Геолокация отправлена. Волонтёр в пути.';
+    const p = document.getElementById('aProg'); let w=0; const t=setInterval(()=>{ w=Math.min(100,w+10); p.style.width=w+'%'; if(w===100) clearInterval(t); }, 700);
+  });
+  document.getElementById('aShare').addEventListener('click', ()=>{
+    document.getElementById('aStatus').textContent = 'Ссылка на маршрут отправлена доверенному контакту.';
+  });
+  document.getElementById('aHelp').addEventListener('click', ()=> alert('Советы: отойти от дороги/экрана, наушники/беруши, дыхание 4-4-6.'));
+  document.getElementById('aMeet').addEventListener('click', ()=> alert('Точка встречи: у входа №2.'));
+
+  // ---- Volunteer screens (stub) ----
+  document.getElementById('vOpen').addEventListener('click', ()=>{
+    alert('В демо этот экран отдельный. В Proto открой «Volunteer — Входящий вызов».');
+  });
+  document.getElementById('codeOk').addEventListener('click', ()=>{
+    const ok = (document.getElementById('code').value||'').trim().length >= 4;
+    document.getElementById('codeOut').textContent = ok ? 'Код подтверждён. Волонтёр верифицирован.' : 'Код слишком короткий.';
+  });
+
+  // ---- Crowd (localStorage) ----
+  function getLS(k){ try{ return JSON.parse(localStorage.getItem(k)||'[]'); }catch(e){ return []; } }
+  function setLS(k,v){ localStorage.setItem(k, JSON.stringify(v)); }
+
+  document.getElementById('cSend').addEventListener('click', ()=>{
+    const name=(document.getElementById('cName').value||'').trim();
+    const addr=(document.getElementById('cAddr').value||'').trim();
+    if(!name || !addr){ alert('Укажи название и адрес'); return; }
+    const cats = Array.from(document.querySelectorAll('[data-c].active')).map(x=>x.textContent);
+    const desc = (document.getElementById('cDesc').value||'').trim();
+    const items = getLS('qr_places'); items.unshift({name,addr,cats,desc,ts:Date.now(),stress:0.2,status:'pending'}); setLS('qr_places', items);
+    document.getElementById('cOut').textContent = 'Отправлено на модерацию.';
+    renderFeed();
+  });
+  document.querySelectorAll('[data-c]').forEach(ch => ch.addEventListener('click', ()=> ch.classList.toggle('active')));
+  document.getElementById('cClear').addEventListener('click', ()=>{ ['cName','cAddr','cDesc'].forEach(id=>document.getElementById(id).value=''); document.querySelectorAll('[data-c].active').forEach(x=>x.classList.remove('active')); document.getElementById('cOut').textContent=''; });
+
+  document.getElementById('rSend').addEventListener('click', ()=>{
+    const place=(document.getElementById('rPlace').value||'').trim(); if(!place){ alert('Укажи место'); return; }
+    const n=+document.getElementById('rN').value, c=+document.getElementById('rC').value, l=+document.getElementById('rL').value;
+    const txt=(document.getElementById('rTxt').value||'').trim();
+    const items=getLS('qr_rates'); items.unshift({place,n,c,l,txt,ts:Date.now()}); setLS('qr_rates', items);
+    document.getElementById('rOut').textContent='Спасибо! Оценка учтена.';
+    renderFeed();
+  });
+
+  document.getElementById('gSend').addEventListener('click', ()=>{
+    const where=(document.getElementById('gWhere').value||'').trim();
+    const what=(document.getElementById('gWhat').value||'').trim();
+    if(!where||!what){ alert('Заполни адрес и описание'); return; }
+    const type=document.getElementById('gType').value, when=document.getElementById('gWhen').value;
+    const items=getLS('qr_issues'); items.unshift({where,what,type,when,ts:Date.now(),status:'pending'}); setLS('qr_issues', items);
+    document.getElementById('gOut').textContent='Спасибо! Отправлено на проверку.';
+    renderFeed();
+  });
+
+  function seedFeed(){
+    if(!localStorage.getItem('qr_seeded')){
+      setLS('qr_feed', [
+        {name:'Кафе «Лимон»', desc:'без музыки, мягкий свет', stress:0.15, status:'approved'},
+        {name:'Библиотека №3', desc:'читальный зал', stress:0.08, status:'approved'},
+        {name:'Парк у озера', desc:'просторно утром', stress:0.10, status:'pending'},
+        {name:'Кофейня «Сова»', desc:'шумно вечером у бара', stress:0.55, status:'flagged'}
+      ]);
+      localStorage.setItem('qr_seeded','1');
+    }
+  }
+  function renderFeed(){
+    seedFeed();
+    let feed = getLS('qr_feed');
+    const added = getLS('qr_places').map(x=>({name:x.name, desc:(x.desc||x.addr), stress:x.stress, status:x.status}));
+    const issues = getLS('qr_issues').map(x=>({name:x.where, desc:x.what, stress:0.6, status:'flagged'}));
+    feed = [...added, ...issues, ...feed];
+    const q = (document.getElementById('mQ').value||'').toLowerCase();
+    const sort = document.getElementById('mSort').value;
+    let list = feed.filter(x=>(x.name+x.desc).toLowerCase().includes(q));
+    if(sort==='calm') list.sort((a,b)=>a.stress-b.stress);
+    if(sort==='stress') list.sort((a,b)=>b.stress-a.stress);
+    const box = document.getElementById('mFeed'); box.innerHTML='';
+    list.forEach(item=>{
+      const el = document.createElement('div'); el.className='card';
+      const status = item.status==='approved'?'одобрено':(item.status==='flagged'?'проблема':'ожидает');
+      el.innerHTML = `<div class="row" style="justify-content:space-between;align-items:center">
+        <div><strong>${item.name}</strong><div class="muted">${item.desc}</div></div>
+        <span class="pill"><span class="dot"></span> ${status} · стресс ${(item.stress*100|0)}</span>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn secondary">Подробнее</button>
+        <button class="btn">Одобрить</button>
+        <button class="btn">Скрыть</button>
+      </div>`;
+      box.appendChild(el);
+    });
+  }
+  document.getElementById('mQ').addEventListener('input', renderFeed);
+  document.getElementById('mSort').addEventListener('change', renderFeed);
+  renderFeed();
+</script>
+
+</body>
+</html>
