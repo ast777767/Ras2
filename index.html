@@ -580,6 +580,296 @@
   document.getElementById('mQ').addEventListener('input', renderFeed);
   document.getElementById('mSort').addEventListener('change', renderFeed);
   renderFeed();
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Quiet Routes Astana</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header>
+  <nav>
+    <a href="index.html" class="active">Главная</a>
+    <a href="routes.html">Маршрут</a>
+    <a href="places.html">Тихие места</a>
+    <a href="planner.html">Планировщик</a>
+    <a href="alarm.html">Тревога</a>
+    <a href="volunteer.html">Волонтёры</a>
+    <a href="crowd.html">Краудсорсинг</a>
+    <a href="about.html">О проекте</a>
+  </nav>
+</header>
+<main>
+  <section class="card">
+    <h1>Quiet Routes Astana</h1>
+    <p>Навигация по тихим маршрутам и местам города Астаны.</p>
+    <div class="row">
+      <a href="routes.html" class="btn">Построить маршрут</a>
+      <a href="places.html" class="btn secondary">Тихие места</a>
+    </div>
+  </section>
+</main>
+<script src="assets/app.js"></script>
+</body>
+</html>
+
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Маршрут — Quiet Routes Astana</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header>
+  <nav>
+    <a href="index.html">Главная</a>
+    <a href="routes.html" class="active">Маршрут</a>
+    <a href="places.html">Тихие места</a>
+    <a href="planner.html">Планировщик</a>
+    <a href="alarm.html">Тревога</a>
+    <a href="volunteer.html">Волонтёры</a>
+    <a href="crowd.html">Краудсорсинг</a>
+    <a href="about.html">О проекте</a>
+  </nav>
+</header>
+<main>
+  <section class="card">
+    <h2>Маршрут A → B</h2>
+    <input id="from" value="ул. Манаса 17">
+    <input id="to" value="Поликлиника №9">
+    <div class="row">
+      <button id="build" class="btn">Построить тихий маршрут</button>
+      <button id="alt" class="btn secondary">Альтернатива</button>
+      <button id="exportRoute" class="btn secondary">Экспорт .txt</button>
+      <button id="startNav" class="btn">Запустить</button>
+    </div>
+    <div class="map">
+      <svg viewBox="0 0 600 320">
+        <path id="seg1" d="M40,260 C140,220 200,190 300,170" stroke="#6b5ae0" stroke-width="4" fill="none"/>
+        <path id="seg2" d="M300,170 C360,160 420,140 520,120" stroke="#6b5ae0" stroke-width="4" stroke-dasharray="6 6" fill="none"/>
+        <path id="segBad" d="M10,300 L590,300" stroke="#e0a75a88" stroke-width="6"/>
+      </svg>
+    </div>
+    <div id="steps" class="card">Шаги маршрута появятся здесь</div>
+  </section>
+</main>
+<script src="assets/app.js"></script>
+</body>
+</html>
+
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Тихие места — Quiet Routes Astana</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header>
+  <nav>
+    <a href="index.html">Главная</a>
+    <a href="routes.html">Маршрут</a>
+    <a href="places.html" class="active">Тихие места</a>
+    <a href="planner.html">Планировщик</a>
+    <a href="alarm.html">Тревога</a>
+    <a href="volunteer.html">Волонтёры</a>
+    <a href="crowd.html">Краудсорсинг</a>
+    <a href="about.html">О проекте</a>
+  </nav>
+</header>
+<main>
+  <section class="card">
+    <h2>Тихие места</h2>
+    <div id="placesList" class="row">Здесь появятся карточки мест (демо).</div>
+  </section>
+</main>
+<script src="assets/app.js"></script>
+</body>
+</html>
+
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Планировщик — Quiet Routes Astana</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header>
+  <nav>
+    <a href="index.html">Главная</a>
+    <a href="routes.html">Маршрут</a>
+    <a href="places.html">Тихие места</a>
+    <a href="planner.html" class="active">Планировщик</a>
+    <a href="alarm.html">Тревога</a>
+    <a href="volunteer.html">Волонтёры</a>
+    <a href="crowd.html">Краудсорсинг</a>
+    <a href="about.html">О проекте</a>
+  </nav>
+</header>
+<main>
+  <section class="card">
+    <h2>Планировщик визита</h2>
+    <input type="date" id="pDate">
+    <input type="time" id="pTime" value="11:00">
+    <button id="planBtn" class="btn">Подобрать тихое окно</button>
+    <div id="pOut" class="muted"></div>
+  </section>
+</main>
+<script src="assets/app.js"></script>
+</body>
+</html>
+
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Тревога — Quiet Routes Astana</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header>
+  <nav>
+    <a href="index.html">Главная</a>
+    <a href="routes.html">Маршрут</a>
+    <a href="places.html">Тихие места</a>
+    <a href="planner.html">Планировщик</a>
+    <a href="alarm.html" class="active">Тревога</a>
+    <a href="volunteer.html">Волонтёры</a>
+    <a href="crowd.html">Краудсорсинг</a>
+    <a href="about.html">О проекте</a>
+  </nav>
+</header>
+<main>
+  <section class="card">
+    <h2>Тревога</h2>
+    <button id="sendGeo" class="btn">Отправить геолокацию</button>
+    <div id="aStatus" class="muted">Ожидание…</div>
+  </section>
+</main>
+<script src="assets/app.js"></script>
+</body>
+</html>
+
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Волонтёры — Quiet Routes Astana</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header>
+  <nav>
+    <a href="index.html">Главная</a>
+    <a href="routes.html">Маршрут</a>
+    <a href="places.html">Тихие места</a>
+    <a href="planner.html">Планировщик</a>
+    <a href="alarm.html">Тревога</a>
+    <a href="volunteer.html" class="active">Волонтёры</a>
+    <a href="crowd.html">Краудсорсинг</a>
+    <a href="about.html">О проекте</a>
+  </nav>
+</header>
+<main>
+  <section class="card">
+    <h2>Экран волонтёра</h2>
+    <p>Входящий вызов от пользователя. ETA: 5 минут.</p>
+  </section>
+</main>
+<script src="assets/app.js"></script>
+</body>
+</html>
+
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Краудсорсинг — Quiet Routes Astana</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header>
+  <nav>
+    <a href="index.html">Главная</a>
+    <a href="routes.html">Маршрут</a>
+    <a href="places.html">Тихие места</a>
+    <a href="planner.html">Планировщик</a>
+    <a href="alarm.html">Тревога</a>
+    <a href="volunteer.html">Волонтёры</a>
+    <a href="crowd.html" class="active">Краудсорсинг</a>
+    <a href="about.html">О проекте</a>
+  </nav>
+</header>
+<main>
+  <section class="card">
+    <h2>Добавить тихое место</h2>
+    <input id="cName" placeholder="Название">
+    <textarea id="cDesc" placeholder="Описание"></textarea>
+    <button id="cSend" class="btn">Отправить</button>
+    <div id="cOut" class="muted"></div>
+  </section>
+</main>
+<script src="assets/app.js"></script>
+</body>
+</html>
+
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>О проекте — Quiet Routes Astana</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header>
+  <nav>
+    <a href="index.html">Главная</a>
+    <a href="routes.html">Маршрут</a>
+    <a href="places.html">Тихие места</a>
+    <a href="planner.html">Планировщик</a>
+    <a href="alarm.html">Тревога</a>
+    <a href="volunteer.html">Волонтёры</a>
+    <a href="crowd.html">Краудсорсинг</a>
+    <a href="about.html" class="active">О проекте</a>
+  </nav>
+</header>
+<main>
+  <section class="card">
+    <h2>О проекте</h2>
+    <p>Quiet Routes Astana — пилотная инициатива для людей с РАС.  
+    Цель — создать спокойные маршруты и комфортные места в городе.</p>
+  </section>
+</main>
+<script src="assets/app.js"></script>
+</body>
+</html>
+
+body{margin:0;font-family:-apple-system,Roboto,Arial;background:#f7f5fb;color:#1f2430}
+header{background:#fff;border-bottom:1px solid #ddd;padding:10px;position:sticky;top:0}
+nav{display:flex;flex-wrap:wrap;gap:8px}
+nav a{padding:6px 10px;border-radius:8px;text-decoration:none;color:#1f2430}
+nav a.active{background:#efeaff}
+main{max-width:1000px;margin:0 auto;padding:16px}
+.card{background:#fff;padding:14px;border-radius:12px;margin-bottom:12px}
+.btn{background:#6b5ae0;color:#fff;padding:8px 12px;border:none;border-radius:8px;text-decoration:none;cursor:pointer}
+.btn.secondary{background:#fff;color:#6b5ae0;border:1px solid #6b5ae0}
+.map{height:300px;background:#e9eef6;border:1px solid #cfd7e6;border-radius:12px;margin-top:10px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.muted{color:#6a7280;font-size:14px}
+
+document.addEventListener('DOMContentLoaded',
+  
 </script>
 
 </body>
