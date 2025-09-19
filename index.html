@@ -36,7 +36,7 @@
   .muted{color:var(--muted); font-size:13px}
   .notice{background:#f8fafc; border:1px solid #e6eef8; border-radius:12px; padding:10px; color:#41566b; font-size:13px}
   .map{position:relative; width:100%; height:340px; background:#e9eef6; border:1px solid #cfd7e6; border-radius:14px; overflow:hidden}
-  /* самое важное: чтобы карта не съедала клики */
+  /* карта и её слои — не перехватывают клики внешнего UI */
   .map, .map * { pointer-events: none; }
   .map .legend{position:absolute; right:10px; top:10px; background:#ffffffcc; border:1px solid #e6eef8; border-radius:8px; padding:6px 8px; font-size:12px; pointer-events:auto}
   .map svg{position:absolute; inset:0}
@@ -52,28 +52,24 @@
   .meter>div{height:100%; width:0; background:linear-gradient(90deg,#6b5ae0,#8f7fff)}
   footer{max-width:1200px; margin:20px auto 30px; padding:0 14px; color:var(--muted); font-size:12px}
   .quiet-theme{filter:brightness(.95) saturate(.9)}
-#view-kids .grid { display:grid; gap:12px; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); }
-#view-kids .row { display:flex; align-items:center; gap:10px; margin:8px 0; }
-#view-kids details { margin:12px 0; }
-#view-kids input, #view-kids select { width:100%; }
 
-.dino-select { display:flex; gap:16px; flex-wrap:wrap; }
-.dino-select label { display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid #ffd1e3; border-radius:12px; cursor:pointer; }
-.dino-select img { width:44px; height:44px; display:block; }
-.dino-select input { accent-color:#ff4f8a; }
-
-.kid-actions { display:flex; gap:12px; margin:12px 0; }
-#btnTest, #btnSOS { padding:12px 16px; border:none; border-radius:10px; font-weight:600; }
-#btnTest { background:#ffd1e3; }
-#btnSOS { background:#ff4f8a; color:#fff; }
-#btnSOS.sos { animation:pulse 1.6s infinite; }
-@keyframes pulse { 0%{transform:scale(1)} 50%{transform:scale(1.04)} 100%{transform:scale(1)} }
-
-.kid-cursor { width:40px; height:40px; position:absolute; transform:translate(-50%,-50%); pointer-events:none; animation:bob 1.2s ease-in-out infinite; }
-@keyframes bob { 0%,100%{ transform:translate(-50%,-52%)} 50%{ transform:translate(-50%,-48%)} }
-
-.hidden { display:none !important; }
-  
+  /* Детский режим */
+  #view-kids .grid { display:grid; gap:12px; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); }
+  #view-kids .row { display:flex; align-items:center; gap:10px; margin:8px 0; }
+  #view-kids details { margin:12px 0; }
+  #view-kids input, #view-kids select { width:100%; }
+  .dino-select { display:flex; gap:16px; flex-wrap:wrap; }
+  .dino-select label { display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid #ffd1e3; border-radius:12px; cursor:pointer; }
+  .dino-select img { width:44px; height:44px; display:block; }
+  .dino-select input { accent-color:#ff4f8a; }
+  .kid-actions { display:flex; gap:12px; margin:12px 0; }
+  #btnTest, #btnSOS { padding:12px 16px; border:none; border-radius:10px; font-weight:600; }
+  #btnTest { background:#ffd1e3; }
+  #btnSOS { background:#ff4f8a; color:#fff; }
+  #btnSOS.sos { animation:pulse 1.6s infinite; }
+  @keyframes pulse { 0%{transform:scale(1)} 50%{transform:scale(1.04)} 100%{transform:scale(1)} }
+  .kid-cursor { width:40px; height:40px; position:absolute; transform:translate(-50%,-50%); pointer-events:none; animation:bob 1.2s ease-in-out infinite; }
+  @keyframes bob { 0%,100%{ transform:translate(-50%,-52%)} 50%{ transform:translate(-50%,-48%)} }
 </style>
 </head>
 <body>
@@ -88,12 +84,13 @@
     <a href="#/volunteer" data-view="volunteer">Волонтёры</a>
     <a href="#/crowd" data-view="crowd">Краудсорсинг</a>
     <a href="#/about" data-view="about">О проекте</a>
+    <a href="#/kids" data-view="kids">Детский режим</a>
   </nav>
 </header>
+
 <!-- Детский режим -->
 <section id="view-kids" class="hidden">
   <h2>Детский режим</h2>
-
   <label class="row">
     <input type="checkbox" id="kidModeToggle">
     <span>Включить детский режим (отслеживание и оповещения)</span>
@@ -422,209 +419,195 @@
 document.addEventListener('DOMContentLoaded', function() {
   console.log("JavaScript is running 🚀");
 
-  <script>
-// === Детский режим ===
-(function(){
-  const els = {
-    toggle: document.getElementById('kidModeToggle'),
-    method: document.getElementById('notifyMethod'),
-    tgToken: document.getElementById('tgToken'),
-    tgChat: document.getElementById('tgChat'),
-    webhookUrl: document.getElementById('webhookUrl'),
-    telegramBlock: document.getElementById('telegramBlock'),
-    webhookBlock: document.getElementById('webhookBlock'),
-    sendInterval: document.getElementById('sendInterval'),
-    btnTest: document.getElementById('btnTest'),
-    btnSOS: document.getElementById('btnSOS'),
-    status: document.getElementById('kidStatus')
-  };
-
-  // dino radio group
-  const dinoRadios = document.querySelectorAll('input[name="dino"]');
-
-  // Если у вас есть карта/контейнер — создайте маркер динозавра:
-  let dinoMarker = document.getElementById('dinoMarker');
-  if(!dinoMarker){
-    dinoMarker = document.createElement('div');
-    dinoMarker.id = 'dinoMarker';
-    dinoMarker.className = 'kid-cursor hidden';
-    document.body.appendChild(dinoMarker); // при желании замените на ваш контейнер карты
-  }
-
-  // SVG спрайты для динозавров
-  const DINO_SVGS = {
-    rex: "<?xml version='1.0'?><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M8 40h20l6 6 6-6h16v8H8z' fill='%23ff4f8a'/><circle cx='24' cy='28' r='10' fill='%23ff82ab'/><circle cx='28' cy='26' r='2' fill='%23000'/></svg>",
-    stego: "<?xml version='1.0'?><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M6 42h24l4 4 4-4h20v6H6z' fill='%23ff4f8a'/><path d='M12 32l6-6 6 6 6-6 6 6' stroke='%23ff82ab' stroke-width='6' fill='none'/></svg>",
-    bronto: "<?xml version='1.0'?><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M10 40h22c8 0 10-8 18-8h4v10H10z' fill='%23ff4f8a'/><path d='M40 22c6 0 6 8 6 12' stroke='%23ff82ab' stroke-width='6' fill='none'/></svg>"
-  };
-
-  function setDino(kind){
-    const svg = DINO_SVGS[kind] || DINO_SVGS.rex;
-    dinoMarker.style.backgroundImage = `url("data:image/svg+xml;utf8,${svg}")`;
-    dinoMarker.style.backgroundSize = 'contain';
-    dinoMarker.style.backgroundRepeat = 'no-repeat';
-  }
-
-  // Загружаем сохранённые настройки
-  const saved = JSON.parse(localStorage.getItem('kid_opts') || '{}');
-  els.toggle.checked = !!saved.enabled;
-  els.method.value = saved.method || 'telegram';
-  els.tgToken.value = saved.tgToken || '';
-  els.tgChat.value = saved.tgChat || '';
-  els.webhookUrl.value = saved.webhookUrl || '';
-  els.sendInterval.value = saved.interval || 60;
-  (dinoRadios.length && [...dinoRadios].find(r=>r.value === (saved.dino||'rex')) || dinoRadios[0]).checked = true;
-  setDino((saved.dino || 'rex'));
-  updateMethodBlocks();
-
-  // Переключатель видимости блоков
-  function updateMethodBlocks(){
-    const m = els.method.value;
-    els.telegramBlock.classList.toggle('hidden', m !== 'telegram');
-    els.webhookBlock.classList.toggle('hidden', m !== 'webhook');
-  }
-  els.method.addEventListener('change', updateMethodBlocks);
-
-  // Сохранение настроек
-  function save(){
-    const chosenDino = [...dinoRadios].find(r=>r.checked)?.value || 'rex';
-    const opts = {
-      enabled: els.toggle.checked,
-      method: els.method.value,
-      tgToken: els.tgToken.value.trim(),
-      tgChat: els.tgChat.value.trim(),
-      webhookUrl: els.webhookUrl.value.trim(),
-      interval: Math.max(10, parseInt(els.sendInterval.value||60,10)),
-      dino: chosenDino
+  // === Детский режим ===
+  (function(){
+    const els = {
+      toggle: document.getElementById('kidModeToggle'),
+      method: document.getElementById('notifyMethod'),
+      tgToken: document.getElementById('tgToken'),
+      tgChat: document.getElementById('tgChat'),
+      webhookUrl: document.getElementById('webhookUrl'),
+      telegramBlock: document.getElementById('telegramBlock'),
+      webhookBlock: document.getElementById('webhookBlock'),
+      sendInterval: document.getElementById('sendInterval'),
+      btnTest: document.getElementById('btnTest'),
+      btnSOS: document.getElementById('btnSOS'),
+      status: document.getElementById('kidStatus')
     };
-    localStorage.setItem('kid_opts', JSON.stringify(opts));
-    setDino(opts.dino);
-    return opts;
-  }
-  dinoRadios.forEach(r=>r.addEventListener('change', save));
-  ['change','input'].forEach(ev=>{
-    els.toggle.addEventListener(ev, onToggle);
-    els.method.addEventListener(ev, save);
-    els.tgToken.addEventListener(ev, save);
-    els.tgChat.addEventListener(ev, save);
-    els.webhookUrl.addEventListener(ev, save);
-    els.sendInterval.addEventListener(ev, save);
-  });
 
-  // Геолокация и отправка
-  let watchId = null;
-  let lastSent = 0;
-  let lastPos = null;
+    const dinoRadios = document.querySelectorAll('input[name="dino"]');
 
-  async function notifyParent(kind, coords, extra){
-    const opts = JSON.parse(localStorage.getItem('kid_opts') || '{}');
-    const ts = new Date().toISOString();
-    const text = kind === 'SOS'
-      ? `🚨 SOS!\nВремя: ${ts}\nШирота: ${coords?.latitude}\nДолгота: ${coords?.longitude}\nСкорость: ${coords?.speed||'—'}`
-      : `📍 Отчёт движения\nВремя: ${ts}\nШирота: ${coords?.latitude}\nДолгота: ${coords?.longitude}\nСкорость: ${coords?.speed||'—'}`;
-
-    try{
-      if(opts.method === 'telegram' && opts.tgToken && opts.tgChat){
-        const url = `https://api.telegram.org/bot${opts.tgToken}/sendMessage`;
-        await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chat_id: opts.tgChat, text })
-        });
-      } else if(opts.method === 'webhook' && opts.webhookUrl){
-        await fetch(opts.webhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type: kind, timestamp: ts, coords, extra })
-        });
-      }
-    } catch(e){
-      console.warn('Не удалось отправить уведомление', e);
+    // маркер динозавра
+    let dinoMarker = document.getElementById('dinoMarker');
+    if(!dinoMarker){
+      dinoMarker = document.createElement('div');
+      dinoMarker.id = 'dinoMarker';
+      dinoMarker.className = 'kid-cursor hidden';
+      document.body.appendChild(dinoMarker);
     }
-  }
 
-  function onToggle(){
-    const opts = save();
-    if(opts.enabled){
-      startTracking();
-      els.status.textContent = 'включено';
-      dinoMarker.classList.remove('hidden');
-    }else{
-      stopTracking();
-      els.status.textContent = 'выключено';
-      dinoMarker.classList.add('hidden');
+    const DINO_SVGS = {
+      rex: "<?xml version='1.0'?><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M8 40h20l6 6 6-6h16v8H8z' fill='%23ff4f8a'/><circle cx='24' cy='28' r='10' fill='%23ff82ab'/><circle cx='28' cy='26' r='2' fill='%23000'/></svg>",
+      stego: "<?xml version='1.0'?><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M6 42h24l4 4 4-4h20v6H6z' fill='%23ff4f8a'/><path d='M12 32l6-6 6 6 6-6 6 6' stroke='%23ff82ab' stroke-width='6' fill='none'/></svg>",
+      bronto: "<?xml version='1.0'?><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M10 40h22c8 0 10-8 18-8h4v10H10z' fill='%23ff4f8a'/><path d='M40 22c6 0 6 8 6 12' stroke='%23ff82ab' stroke-width='6' fill='none'/></svg>"
+    };
+
+    function setDino(kind){
+      const svg = DINO_SVGS[kind] || DINO_SVGS.rex;
+      dinoMarker.style.backgroundImage = `url("data:image/svg+xml;utf8,${svg}")`;
+      dinoMarker.style.backgroundSize = 'contain';
+      dinoMarker.style.backgroundRepeat = 'no-repeat';
     }
-  }
 
-  function startTracking(){
-    if(!('geolocation' in navigator)){
-      alert('Геолокация не поддерживается браузером');
-      els.toggle.checked = false;
-      save();
-      return;
+    function updateMethodBlocks(){
+      const m = els.method.value;
+      els.telegramBlock.classList.toggle('hidden', m !== 'telegram');
+      els.webhookBlock.classList.toggle('hidden', m !== 'webhook');
     }
-    if(watchId !== null) return;
-    watchId = navigator.geolocation.watchPosition(async (pos)=>{
-      const { latitude, longitude, speed, accuracy } = pos.coords;
-      lastPos = { latitude, longitude, speed, accuracy };
-      // Обновим маркер динозавра в UI — тут просто ставим по центру экрана,
-      // при наличии карты синхронизируйте с координатами карты.
-      dinoMarker.style.left = '50%';
-      dinoMarker.style.top = '50%';
 
-      const now = Date.now();
-      const interval = Math.max(10, parseInt(els.sendInterval.value||60,10))*1000;
-      if(now - lastSent >= interval){
-        lastSent = now;
-        notifyParent('TICK', lastPos);
-      }
-    }, (err)=>{
-      console.warn('Геолокация ошибка', err);
-    }, {
-      enableHighAccuracy: true,
-      maximumAge: 5000,
-      timeout: 15000
+    // загрузка настроек
+    const saved = JSON.parse(localStorage.getItem('kid_opts') || '{}');
+    if(els.toggle) els.toggle.checked = !!saved.enabled;
+    if(els.method) els.method.value = saved.method || 'telegram';
+    if(els.tgToken) els.tgToken.value = saved.tgToken || '';
+    if(els.tgChat) els.tgChat.value = saved.tgChat || '';
+    if(els.webhookUrl) els.webhookUrl.value = saved.webhookUrl || '';
+    if(els.sendInterval) els.sendInterval.value = saved.interval || 60;
+
+    if(dinoRadios.length){
+      const toCheck = [...dinoRadios].find(r=>r.value === (saved.dino||'rex')) || dinoRadios[0];
+      toCheck.checked = true;
+    }
+    setDino(saved.dino || 'rex');
+    updateMethodBlocks();
+
+    function save(){
+      const chosenDino = [...dinoRadios].find(r=>r.checked)?.value || 'rex';
+      const opts = {
+        enabled: els.toggle?.checked,
+        method: els.method?.value,
+        tgToken: els.tgToken?.value.trim(),
+        tgChat: els.tgChat?.value.trim(),
+        webhookUrl: els.webhookUrl?.value.trim(),
+        interval: Math.max(10, parseInt(els.sendInterval?.value||60,10)),
+        dino: chosenDino
+      };
+      localStorage.setItem('kid_opts', JSON.stringify(opts));
+      setDino(opts.dino);
+      return opts;
+    }
+
+    dinoRadios.forEach(r=>r.addEventListener('change', save));
+    ['change','input'].forEach(ev=>{
+      els.toggle?.addEventListener(ev, onToggle);
+      els.method?.addEventListener(ev, ()=>{ save(); updateMethodBlocks(); });
+      els.tgToken?.addEventListener(ev, save);
+      els.tgChat?.addEventListener(ev, save);
+      els.webhookUrl?.addEventListener(ev, save);
+      els.sendInterval?.addEventListener(ev, save);
     });
-  }
 
-  function stopTracking(){
-    if(watchId !== null){
-      navigator.geolocation.clearWatch(watchId);
-      watchId = null;
+    // геолокация
+    let watchId = null;
+    let lastSent = 0;
+    let lastPos = null;
+
+    async function notifyParent(kind, coords, extra){
+      const opts = JSON.parse(localStorage.getItem('kid_opts') || '{}');
+      const ts = new Date().toISOString();
+      const text = kind === 'SOS'
+        ? `🚨 SOS!\nВремя: ${ts}\nШирота: ${coords?.latitude}\nДолгота: ${coords?.longitude}\nСкорость: ${coords?.speed||'—'}`
+        : `📍 Отчёт движения\nВремя: ${ts}\nШирота: ${coords?.latitude}\nДолгота: ${coords?.longitude}\nСкорость: ${coords?.speed||'—'}`;
+
+      try{
+        if(opts.method === 'telegram' && opts.tgToken && opts.tgChat){
+          const url = `https://api.telegram.org/bot${opts.tgToken}/sendMessage`;
+          await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: opts.tgChat, text })
+          });
+        } else if(opts.method === 'webhook' && opts.webhookUrl){
+          await fetch(opts.webhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: kind, timestamp: ts, coords, extra })
+          });
+        }
+      } catch(e){
+        console.warn('Не удалось отправить уведомление', e);
+      }
     }
-  }
 
-  // Кнопки
-  els.btnTest.addEventListener('click', ()=>{
-    notifyParent('TEST', lastPos || {latitude:null, longitude:null}, { note: 'probe' });
-  });
-  els.btnSOS.addEventListener('click', ()=>{
-    if(lastPos){
-      notifyParent('SOS', lastPos);
-    } else {
-      // запросим текущее — и после получения отправим
-      navigator.geolocation.getCurrentPosition((pos)=>{
+    function onToggle(){
+      const opts = save();
+      if(opts.enabled){
+        startTracking();
+        els.status && (els.status.textContent = 'включено');
+        dinoMarker.classList.remove('hidden');
+      }else{
+        stopTracking();
+        els.status && (els.status.textContent = 'выключено');
+        dinoMarker.classList.add('hidden');
+      }
+    }
+
+    function startTracking(){
+      if(!('geolocation' in navigator)){
+        alert('Геолокация не поддерживается браузером');
+        if(els.toggle) els.toggle.checked = false;
+        save();
+        return;
+      }
+      if(watchId !== null) return;
+      watchId = navigator.geolocation.watchPosition(async (pos)=>{
         const { latitude, longitude, speed, accuracy } = pos.coords;
-        notifyParent('SOS', {latitude, longitude, speed, accuracy});
-      }, ()=>notifyParent('SOS', {latitude:null, longitude:null}));
+        lastPos = { latitude, longitude, speed, accuracy };
+        // позиция курсора-динозавра (для демо — центр)
+        dinoMarker.style.left = '50%';
+        dinoMarker.style.top = '50%';
+
+        const now = Date.now();
+        const interval = Math.max(10, parseInt(els.sendInterval?.value||60,10))*1000;
+        if(now - lastSent >= interval){
+          lastSent = now;
+          notifyParent('TICK', lastPos);
+        }
+      }, (err)=>{
+        console.warn('Геолокация ошибка', err);
+      }, {
+        enableHighAccuracy: true,
+        maximumAge: 5000,
+        timeout: 15000
+      });
     }
-  });
 
-  // Автозапуск если было включено
-  if(els.toggle.checked){ onToggle(); }
+    function stopTracking(){
+      if(watchId !== null){
+        navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+      }
+    }
 
-  // Если у вас есть роутер show(view) — откроем сохранённый или kids
-  const last = localStorage.getItem('qr_last_view');
-  document.querySelectorAll('nav a[data-view="kids"]').forEach(a=>{
-    a.addEventListener('click', (e)=> {
-      if(typeof show === 'function'){ show('kids'); }
+    els.btnTest?.addEventListener('click', ()=>{
+      notifyParent('TEST', lastPos || {latitude:null, longitude:null}, { note: 'probe' });
     });
-  });
-})();
-</script>
-  
+    els.btnSOS?.addEventListener('click', ()=>{
+      if(lastPos){
+        notifyParent('SOS', lastPos);
+      } else {
+        navigator.geolocation.getCurrentPosition((pos)=>{
+          const { latitude, longitude, speed, accuracy } = pos.coords;
+          notifyParent('SOS', {latitude, longitude, speed, accuracy});
+        }, ()=>notifyParent('SOS', {latitude:null, longitude:null}));
+      }
+    });
+
+    if(els.toggle?.checked){ onToggle(); }
+  })();
+
   // ---- Router ----
-  const routes = ["home","routes","places","planner","alarm","volunteer","crowd","about"];
+  const routes = ["home","routes","places","planner","alarm","volunteer","crowd","about","kids"];
   function setActive(view){
     document.querySelectorAll('nav a').forEach(a=>a.classList.toggle('active', a.dataset.view===view));
   }
@@ -639,7 +622,6 @@ document.addEventListener('DOMContentLoaded', function() {
     try{ localStorage.setItem('qr_last_view', view); }catch(e){}
   }
   function parseRoute(){
-    // допускаем #/ или пустой хэш
     const raw = location.hash || '#/';
     const m = raw.match(/^#\/?([^?]*)/);
     const segment = (m && m[1]) ? m[1] : '';
@@ -648,14 +630,12 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   window.addEventListener('hashchange', parseRoute);
   parseRoute();
-  const last = localStorage.getItem('qr_last_view');
-  if(last) show(last);
+  const lastView = localStorage.getItem('qr_last_view');
+  if(lastView) show(lastView);
 
   // ---- Quiet theme ----
   const toggleBtn = document.getElementById('toggleQuiet');
-  if(toggleBtn){
-    toggleBtn.addEventListener('click', ()=> document.body.classList.toggle('quiet-theme'));
-  }
+  toggleBtn?.addEventListener('click', ()=> document.body.classList.toggle('quiet-theme'));
 
   // ---- Routes logic (demo) ----
   const chipsRoute = Array.from(document.querySelectorAll('#view-routes .chip'));
@@ -666,7 +646,6 @@ document.addEventListener('DOMContentLoaded', function() {
     return { noise:on.includes('noise'), crowd:on.includes('crowd'), light:on.includes('light'), cross:on.includes('cross'),
              parks:on.includes('parks'), yards:on.includes('yards'), paths:on.includes('paths') };
   }
-
   function timeBucket(){
     const h = new Date().getHours();
     if(h>=6 && h<10) return 'утро';
@@ -674,7 +653,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if(h>=16 && h<20) return 'вечер';
     return 'ночь';
   }
-
   function buildQuiet(){
     const pr = currentProfile(); const bucket = timeBucket();
     let w = { park:1.0, yard:1.1, foot:1.2, street:1.6, big:2.1, screens:2.4 };
@@ -701,28 +679,20 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="card"><strong>Небольшая улица</strong><div class="muted">минимум витрин · вес ${(w.street).toFixed(1)}</div></div>`;
     }
   }
-
-  const buildBtn = document.getElementById('build');
-  if(buildBtn) buildBtn.addEventListener('click', buildQuiet);
-
-  const altBtn = document.getElementById('alt');
-  if(altBtn) altBtn.addEventListener('click', ()=>{
+  document.getElementById('build')?.addEventListener('click', buildQuiet);
+  document.getElementById('alt')?.addEventListener('click', ()=>{
     const seg2 = document.getElementById('seg2');
     if(seg2) seg2.setAttribute('stroke-dasharray','8 8');
     alert('Показ альтернативного участка (демо)');
   });
-
-  const exportRoute = document.getElementById('exportRoute');
-  if(exportRoute) exportRoute.addEventListener('click', ()=>{
+  document.getElementById('exportRoute')?.addEventListener('click', ()=>{
     const txt = 'Маршрут A→B (тихий): двор → парк → малая улица. Настройки: '+JSON.stringify(currentProfile());
     const blob = new Blob([txt], {type:'text/plain'});
     const url=URL.createObjectURL(blob);
     const a = Object.assign(document.createElement('a'), {href:url, download:'quiet_route.txt'});
     document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
   });
-
-  const startNav = document.getElementById('startNav');
-  if(startNav) startNav.addEventListener('click', ()=>{
+  document.getElementById('startNav')?.addEventListener('click', ()=>{
     location.hash = '#/alarm';
     alert('Демо: навигация запущена, в «Тревоге» можно позвать волонтёра.');
   });
@@ -767,92 +737,71 @@ document.addEventListener('DOMContentLoaded', function() {
   // ---- Planner ----
   const pd=document.getElementById('pDate'); if(pd) pd.value=new Date().toISOString().split('T')[0];
 
-  const pSuggest=document.getElementById('pSuggest');
-  if(pSuggest){
-    pSuggest.addEventListener('click', ()=>{
-      const wd=[0,6].includes(new Date(document.getElementById('pDate').value).getDay());
-      const win=wd?'09:00–11:00':'10:30–12:00 или 14:30–16:30';
-      document.getElementById('pOut').textContent='Рекомендованное тихое окно: '+win+'.';
-    });
-  }
-  const pSave=document.getElementById('pSave');
-  if(pSave){
-    pSave.addEventListener('click', ()=>{
-      const rec={date:document.getElementById('pDate').value,time:document.getElementById('pTime').value,A:document.getElementById('pA').value,B:document.getElementById('pB').value};
-      try{ localStorage.setItem('qr_plan', JSON.stringify(rec)); }catch(e){}
-      document.getElementById('pOut').textContent='Сохранено: '+rec.date+' '+rec.time+' · '+rec.A+' → '+rec.B;
-    });
-  }
-  const pExport=document.getElementById('pExport');
-  if(pExport){
-    pExport.addEventListener('click', ()=>{
-      const txt=document.getElementById('pOut').textContent||'Сначала сохраните маршрут';
-      const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([txt],{type:'text/plain'})),download:'plan.txt'});
-      document.body.appendChild(a); a.click(); a.remove();
-    });
-  }
+  document.getElementById('pSuggest')?.addEventListener('click', ()=>{
+    const d = new Date(document.getElementById('pDate').value);
+    const wd=[0,6].includes(d.getDay());
+    const win=wd?'09:00–11:00':'10:30–12:00 или 14:30–16:30';
+    document.getElementById('pOut').textContent='Рекомендованное тихое окно: '+win+'.';
+  });
+  document.getElementById('pSave')?.addEventListener('click', ()=>{
+    const rec={date:document.getElementById('pDate').value,time:document.getElementById('pTime').value,A:document.getElementById('pA').value,B:document.getElementById('pB').value};
+    try{ localStorage.setItem('qr_plan', JSON.stringify(rec)); }catch(e){}
+    document.getElementById('pOut').textContent='Сохранено: '+rec.date+' '+rec.time+' · '+rec.A+' → '+rec.B;
+  });
+  document.getElementById('pExport')?.addEventListener('click', ()=>{
+    const txt=document.getElementById('pOut').textContent||'Сначала сохраните маршрут';
+    const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([txt],{type:'text/plain'})),download:'plan.txt'});
+    document.body.appendChild(a); a.click(); a.remove();
+  });
 
   // ---- Alarm & Volunteer ----
-  const aSend=document.getElementById('aSend');
-  if(aSend){
-    aSend.addEventListener('click', ()=>{
-      const st=document.getElementById('aStatus'); if(st) st.textContent='Геолокация отправлена. Волонтёр в пути.';
-      const p=document.getElementById('aProg'); let w=0; const t=setInterval(()=>{ w=Math.min(100,w+10); if(p) p.style.width=w+'%'; if(w===100) clearInterval(t); },700);
-    });
-  }
-  const aShare=document.getElementById('aShare');
-  if(aShare){ aShare.addEventListener('click', ()=>{ const st=document.getElementById('aStatus'); if(st) st.textContent='Ссылка на маршрут отправлена доверенному контакту.'; }); }
-  const aHelp=document.getElementById('aHelp'); if(aHelp) aHelp.addEventListener('click', ()=>alert('Советы: отойти от дороги/экрана, наушники/беруши, дыхание 4-4-6.'));
-  const aMeet=document.getElementById('aMeet'); if(aMeet) aMeet.addEventListener('click', ()=>alert('Точка встречи: у входа №2.'));
+  document.getElementById('aSend')?.addEventListener('click', ()=>{
+    const st=document.getElementById('aStatus'); if(st) st.textContent='Геолокация отправлена. Волонтёр в пути.';
+    const p=document.getElementById('aProg'); let w=0; const t=setInterval(()=>{ w=Math.min(100,w+10); if(p) p.style.width=w+'%'; if(w===100) clearInterval(t); },700);
+  });
+  document.getElementById('aShare')?.addEventListener('click', ()=>{ const st=document.getElementById('aStatus'); if(st) st.textContent='Ссылка на маршрут отправлена доверенному контакту.'; });
+  document.getElementById('aHelp')?.addEventListener('click', ()=>alert('Советы: отойти от дороги/экрана, наушники/беруши, дыхание 4-4-6.'));
+  document.getElementById['aMeet']?.addEventListener?.('click', ()=>alert('Точка встречи: у входа №2.'));
 
-  const vOpen=document.getElementById('vOpen'); if(vOpen) vOpen.addEventListener('click', ()=>alert('Экран волонтёра открыт (демо).'));
-  const codeOk=document.getElementById('codeOk'); if(codeOk) codeOk.addEventListener('click', ()=>{ const ok=(document.getElementById('code').value||'').trim().length>=4; document.getElementById('codeOut').textContent=ok?'Код подтверждён. Волонтёр верифицирован.':'Код слишком короткий.'; });
+  document.getElementById('vOpen')?.addEventListener('click', ()=>alert('Экран волонтёра открыт (демо).'));
+  document.getElementById('codeOk')?.addEventListener('click', ()=>{
+    const ok=(document.getElementById('code').value||'').trim().length>=4;
+    document.getElementById('codeOut').textContent=ok?'Код подтверждён. Волонтёр верифицирован.':'Код слишком короткий.';
+  });
 
   // ---- Crowd ----
   function getLS(k){ try{return JSON.parse(localStorage.getItem(k)||'[]')}catch(e){return[]} }
   function setLS(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
-  const cSend=document.getElementById('cSend');
-  if(cSend){
-    cSend.addEventListener('click', ()=>{
-      const n=(document.getElementById('cName').value||'').trim(), a=(document.getElementById('cAddr').value||'').trim();
-      if(!n||!a){ alert('Укажи название и адрес'); return; }
-      const cats=[...document.querySelectorAll('[data-c].active')].map(x=>x.textContent);
-      const desc=(document.getElementById('cDesc').value||'').trim();
-      const items=getLS('qr_places'); items.unshift({name:n,addr:a,cats,desc,ts:Date.now(),stress:0.2,status:'pending'}); setLS('qr_places',items);
-      const out=document.getElementById('cOut'); if(out) out.textContent='Отправлено на модерацию.'; renderFeed();
-    });
-  }
-  const cClear=document.getElementById('cClear');
-  if(cClear){
-    cClear.addEventListener('click', ()=>{
-      ['cName','cAddr','cDesc'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
-      document.querySelectorAll('[data-c].active').forEach(x=>x.classList.remove('active'));
-      const out=document.getElementById('cOut'); if(out) out.textContent='';
-    });
-  }
+  document.getElementById('cSend')?.addEventListener('click', ()=>{
+    const n=(document.getElementById('cName').value||'').trim(), a=(document.getElementById('cAddr').value||'').trim();
+    if(!n||!a){ alert('Укажи название и адрес'); return; }
+    const cats=[...document.querySelectorAll('[data-c].active')].map(x=>x.textContent);
+    const desc=(document.getElementById('cDesc').value||'').trim();
+    const items=getLS('qr_places'); items.unshift({name:n,addr:a,cats,desc,ts:Date.now(),stress:0.2,status:'pending'}); setLS('qr_places',items);
+    const out=document.getElementById('cOut'); if(out) out.textContent='Отправлено на модерацию.'; renderFeed();
+  });
+  document.getElementById('cClear')?.addEventListener('click', ()=>{
+    ['cName','cAddr','cDesc'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
+    document.querySelectorAll('[data-c].active').forEach(x=>x.classList.remove('active'));
+    const out=document.getElementById('cOut'); if(out) out.textContent='';
+  });
   document.querySelectorAll('[data-c]').forEach(ch=>ch.addEventListener('click', ()=>ch.classList.toggle('active')));
 
-  const rSend=document.getElementById('rSend');
-  if(rSend){
-    rSend.addEventListener('click', ()=>{
-      const place=(document.getElementById('rPlace').value||'').trim(); if(!place){ alert('Укажи место'); return; }
-      const n=+document.getElementById('rN').value, c=+document.getElementById('rC').value, l=+document.getElementById('rL').value, txt=(document.getElementById('rTxt').value||'').trim();
-      const items=getLS('qr_rates'); items.unshift({place,n,c,l,txt,ts:Date.now()}); setLS('qr_rates',items);
-      const out=document.getElementById('rOut'); if(out) out.textContent='Спасибо! Оценка учтена.'; renderFeed();
-    });
-  }
+  document.getElementById('rSend')?.addEventListener('click', ()=>{
+    const place=(document.getElementById('rPlace').value||'').trim(); if(!place){ alert('Укажи место'); return; }
+    const n=+document.getElementById('rN').value, c=+document.getElementById('rC').value, l=+document.getElementById('rL').value, txt=(document.getElementById('rTxt').value||'').trim();
+    const items=getLS('qr_rates'); items.unshift({place,n,c,l,txt,ts:Date.now()}); setLS('qr_rates',items);
+    const out=document.getElementById('rOut'); if(out) out.textContent='Спасибо! Оценка учтена.'; renderFeed();
+  });
 
-  const gSend=document.getElementById('gSend');
-  if(gSend){
-    gSend.addEventListener('click', ()=>{
-      const where=(document.getElementById('gWhere').value||'').trim();
-      const what=(document.getElementById('gWhat').value||'').trim();
-      if(!where||!what){ alert('Заполни адрес и описание'); return; }
-      const type=document.getElementById('gType').value, when=document.getElementById('gWhen').value;
-      const items=getLS('qr_issues'); items.unshift({where,what,type,when,ts:Date.now(),status:'pending'}); setLS('qr_issues',items);
-      const out=document.getElementById('gOut'); if(out) out.textContent='Спасибо! Отправлено на проверку.'; renderFeed();
-    });
-  }
+  document.getElementById('gSend')?.addEventListener('click', ()=>{
+    const where=(document.getElementById('gWhere').value||'').trim();
+    const what=(document.getElementById('gWhat').value||'').trim();
+    if(!where||!what){ alert('Заполни адрес и описание'); return; }
+    const type=document.getElementById('gType').value, when=document.getElementById('gWhen').value;
+    const items=getLS('qr_issues'); items.unshift({where,what,type,when,ts:Date.now(),status:'pending'}); setLS('qr_issues',items);
+    const out=document.getElementById('gOut'); if(out) out.textContent='Спасибо! Отправлено на проверку.'; renderFeed();
+  });
 
   function seed(){
     if(!localStorage.getItem('qr_seeded')){
