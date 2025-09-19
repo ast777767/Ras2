@@ -52,6 +52,28 @@
   .meter>div{height:100%; width:0; background:linear-gradient(90deg,#6b5ae0,#8f7fff)}
   footer{max-width:1200px; margin:20px auto 30px; padding:0 14px; color:var(--muted); font-size:12px}
   .quiet-theme{filter:brightness(.95) saturate(.9)}
+#view-kids .grid { display:grid; gap:12px; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); }
+#view-kids .row { display:flex; align-items:center; gap:10px; margin:8px 0; }
+#view-kids details { margin:12px 0; }
+#view-kids input, #view-kids select { width:100%; }
+
+.dino-select { display:flex; gap:16px; flex-wrap:wrap; }
+.dino-select label { display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid #ffd1e3; border-radius:12px; cursor:pointer; }
+.dino-select img { width:44px; height:44px; display:block; }
+.dino-select input { accent-color:#ff4f8a; }
+
+.kid-actions { display:flex; gap:12px; margin:12px 0; }
+#btnTest, #btnSOS { padding:12px 16px; border:none; border-radius:10px; font-weight:600; }
+#btnTest { background:#ffd1e3; }
+#btnSOS { background:#ff4f8a; color:#fff; }
+#btnSOS.sos { animation:pulse 1.6s infinite; }
+@keyframes pulse { 0%{transform:scale(1)} 50%{transform:scale(1.04)} 100%{transform:scale(1)} }
+
+.kid-cursor { width:40px; height:40px; position:absolute; transform:translate(-50%,-50%); pointer-events:none; animation:bob 1.2s ease-in-out infinite; }
+@keyframes bob { 0%,100%{ transform:translate(-50%,-52%)} 50%{ transform:translate(-50%,-48%)} }
+
+.hidden { display:none !important; }
+  
 </style>
 </head>
 <body>
@@ -68,7 +90,75 @@
     <a href="#/about" data-view="about">О проекте</a>
   </nav>
 </header>
+<!-- Детский режим -->
+<section id="view-kids" class="hidden">
+  <h2>Детский режим</h2>
 
+  <label class="row">
+    <input type="checkbox" id="kidModeToggle">
+    <span>Включить детский режим (отслеживание и оповещения)</span>
+  </label>
+
+  <details>
+    <summary>Настройки оповещений</summary>
+    <div class="grid">
+      <label>Способ:
+        <select id="notifyMethod">
+          <option value="telegram">Telegram Bot</option>
+          <option value="webhook">Мой Webhook URL</option>
+        </select>
+      </label>
+
+      <div id="telegramBlock">
+        <label>BOT_TOKEN
+          <input type="password" id="tgToken" placeholder="123456:ABC-DEF...">
+        </label>
+        <label>CHAT_ID
+          <input type="text" id="tgChat" placeholder="Напр. 123456789">
+        </label>
+      </div>
+
+      <div id="webhookBlock" class="hidden">
+        <label>WEBHOOK_URL
+          <input type="url" id="webhookUrl" placeholder="https://my-server.example/hook">
+        </label>
+      </div>
+
+      <label>Интервал отправки (сек.)
+        <input type="number" id="sendInterval" min="10" step="5" value="60">
+      </label>
+    </div>
+  </details>
+
+  <details>
+    <summary>Динозавр вместо стрелки</summary>
+    <div class="dino-select">
+      <label>
+        <input type="radio" name="dino" value="rex" checked>
+        <img src="data:image/svg+xml;utf8,<?xml version='1.0'?><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M8 40h20l6 6 6-6h16v8H8z' fill='%23ff4f8a'/><circle cx='24' cy='28' r='10' fill='%23ff82ab'/><circle cx='28' cy='26' r='2' fill='%23000'/></svg>" alt="Rex">
+        <span>Рекс</span>
+      </label>
+      <label>
+        <input type="radio" name="dino" value="stego">
+        <img src="data:image/svg+xml;utf8,<?xml version='1.0'?><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M6 42h24l4 4 4-4h20v6H6z' fill='%23ff4f8a'/><path d='M12 32l6-6 6 6 6-6 6 6' stroke='%23ff82ab' stroke-width='6' fill='none'/></svg>" alt="Stego">
+        <span>Стего</span>
+      </label>
+      <label>
+        <input type="radio" name="dino" value="bronto">
+        <img src="data:image/svg+xml;utf8,<?xml version='1.0'?><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M10 40h22c8 0 10-8 18-8h4v10H10z' fill='%23ff4f8a'/><path d='M40 22c6 0 6 8 6 12' stroke='%23ff82ab' stroke-width='6' fill='none'/></svg>" alt="Bronto">
+        <span>Бронто</span>
+      </label>
+    </div>
+  </details>
+
+  <div class="kid-actions">
+    <button id="btnTest">Отправить тестовое сообщение</button>
+    <button id="btnSOS" class="sos">SOS</button>
+  </div>
+
+  <p class="hint">Статус: <span id="kidStatus">выключено</span></p>
+</section>
+  
 <main>
   <!-- HOME -->
   <section id="view-home" class="view">
@@ -332,6 +422,207 @@
 document.addEventListener('DOMContentLoaded', function() {
   console.log("JavaScript is running 🚀");
 
+  <script>
+// === Детский режим ===
+(function(){
+  const els = {
+    toggle: document.getElementById('kidModeToggle'),
+    method: document.getElementById('notifyMethod'),
+    tgToken: document.getElementById('tgToken'),
+    tgChat: document.getElementById('tgChat'),
+    webhookUrl: document.getElementById('webhookUrl'),
+    telegramBlock: document.getElementById('telegramBlock'),
+    webhookBlock: document.getElementById('webhookBlock'),
+    sendInterval: document.getElementById('sendInterval'),
+    btnTest: document.getElementById('btnTest'),
+    btnSOS: document.getElementById('btnSOS'),
+    status: document.getElementById('kidStatus')
+  };
+
+  // dino radio group
+  const dinoRadios = document.querySelectorAll('input[name="dino"]');
+
+  // Если у вас есть карта/контейнер — создайте маркер динозавра:
+  let dinoMarker = document.getElementById('dinoMarker');
+  if(!dinoMarker){
+    dinoMarker = document.createElement('div');
+    dinoMarker.id = 'dinoMarker';
+    dinoMarker.className = 'kid-cursor hidden';
+    document.body.appendChild(dinoMarker); // при желании замените на ваш контейнер карты
+  }
+
+  // SVG спрайты для динозавров
+  const DINO_SVGS = {
+    rex: "<?xml version='1.0'?><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M8 40h20l6 6 6-6h16v8H8z' fill='%23ff4f8a'/><circle cx='24' cy='28' r='10' fill='%23ff82ab'/><circle cx='28' cy='26' r='2' fill='%23000'/></svg>",
+    stego: "<?xml version='1.0'?><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M6 42h24l4 4 4-4h20v6H6z' fill='%23ff4f8a'/><path d='M12 32l6-6 6 6 6-6 6 6' stroke='%23ff82ab' stroke-width='6' fill='none'/></svg>",
+    bronto: "<?xml version='1.0'?><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M10 40h22c8 0 10-8 18-8h4v10H10z' fill='%23ff4f8a'/><path d='M40 22c6 0 6 8 6 12' stroke='%23ff82ab' stroke-width='6' fill='none'/></svg>"
+  };
+
+  function setDino(kind){
+    const svg = DINO_SVGS[kind] || DINO_SVGS.rex;
+    dinoMarker.style.backgroundImage = `url("data:image/svg+xml;utf8,${svg}")`;
+    dinoMarker.style.backgroundSize = 'contain';
+    dinoMarker.style.backgroundRepeat = 'no-repeat';
+  }
+
+  // Загружаем сохранённые настройки
+  const saved = JSON.parse(localStorage.getItem('kid_opts') || '{}');
+  els.toggle.checked = !!saved.enabled;
+  els.method.value = saved.method || 'telegram';
+  els.tgToken.value = saved.tgToken || '';
+  els.tgChat.value = saved.tgChat || '';
+  els.webhookUrl.value = saved.webhookUrl || '';
+  els.sendInterval.value = saved.interval || 60;
+  (dinoRadios.length && [...dinoRadios].find(r=>r.value === (saved.dino||'rex')) || dinoRadios[0]).checked = true;
+  setDino((saved.dino || 'rex'));
+  updateMethodBlocks();
+
+  // Переключатель видимости блоков
+  function updateMethodBlocks(){
+    const m = els.method.value;
+    els.telegramBlock.classList.toggle('hidden', m !== 'telegram');
+    els.webhookBlock.classList.toggle('hidden', m !== 'webhook');
+  }
+  els.method.addEventListener('change', updateMethodBlocks);
+
+  // Сохранение настроек
+  function save(){
+    const chosenDino = [...dinoRadios].find(r=>r.checked)?.value || 'rex';
+    const opts = {
+      enabled: els.toggle.checked,
+      method: els.method.value,
+      tgToken: els.tgToken.value.trim(),
+      tgChat: els.tgChat.value.trim(),
+      webhookUrl: els.webhookUrl.value.trim(),
+      interval: Math.max(10, parseInt(els.sendInterval.value||60,10)),
+      dino: chosenDino
+    };
+    localStorage.setItem('kid_opts', JSON.stringify(opts));
+    setDino(opts.dino);
+    return opts;
+  }
+  dinoRadios.forEach(r=>r.addEventListener('change', save));
+  ['change','input'].forEach(ev=>{
+    els.toggle.addEventListener(ev, onToggle);
+    els.method.addEventListener(ev, save);
+    els.tgToken.addEventListener(ev, save);
+    els.tgChat.addEventListener(ev, save);
+    els.webhookUrl.addEventListener(ev, save);
+    els.sendInterval.addEventListener(ev, save);
+  });
+
+  // Геолокация и отправка
+  let watchId = null;
+  let lastSent = 0;
+  let lastPos = null;
+
+  async function notifyParent(kind, coords, extra){
+    const opts = JSON.parse(localStorage.getItem('kid_opts') || '{}');
+    const ts = new Date().toISOString();
+    const text = kind === 'SOS'
+      ? `🚨 SOS!\nВремя: ${ts}\nШирота: ${coords?.latitude}\nДолгота: ${coords?.longitude}\nСкорость: ${coords?.speed||'—'}`
+      : `📍 Отчёт движения\nВремя: ${ts}\nШирота: ${coords?.latitude}\nДолгота: ${coords?.longitude}\nСкорость: ${coords?.speed||'—'}`;
+
+    try{
+      if(opts.method === 'telegram' && opts.tgToken && opts.tgChat){
+        const url = `https://api.telegram.org/bot${opts.tgToken}/sendMessage`;
+        await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: opts.tgChat, text })
+        });
+      } else if(opts.method === 'webhook' && opts.webhookUrl){
+        await fetch(opts.webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: kind, timestamp: ts, coords, extra })
+        });
+      }
+    } catch(e){
+      console.warn('Не удалось отправить уведомление', e);
+    }
+  }
+
+  function onToggle(){
+    const opts = save();
+    if(opts.enabled){
+      startTracking();
+      els.status.textContent = 'включено';
+      dinoMarker.classList.remove('hidden');
+    }else{
+      stopTracking();
+      els.status.textContent = 'выключено';
+      dinoMarker.classList.add('hidden');
+    }
+  }
+
+  function startTracking(){
+    if(!('geolocation' in navigator)){
+      alert('Геолокация не поддерживается браузером');
+      els.toggle.checked = false;
+      save();
+      return;
+    }
+    if(watchId !== null) return;
+    watchId = navigator.geolocation.watchPosition(async (pos)=>{
+      const { latitude, longitude, speed, accuracy } = pos.coords;
+      lastPos = { latitude, longitude, speed, accuracy };
+      // Обновим маркер динозавра в UI — тут просто ставим по центру экрана,
+      // при наличии карты синхронизируйте с координатами карты.
+      dinoMarker.style.left = '50%';
+      dinoMarker.style.top = '50%';
+
+      const now = Date.now();
+      const interval = Math.max(10, parseInt(els.sendInterval.value||60,10))*1000;
+      if(now - lastSent >= interval){
+        lastSent = now;
+        notifyParent('TICK', lastPos);
+      }
+    }, (err)=>{
+      console.warn('Геолокация ошибка', err);
+    }, {
+      enableHighAccuracy: true,
+      maximumAge: 5000,
+      timeout: 15000
+    });
+  }
+
+  function stopTracking(){
+    if(watchId !== null){
+      navigator.geolocation.clearWatch(watchId);
+      watchId = null;
+    }
+  }
+
+  // Кнопки
+  els.btnTest.addEventListener('click', ()=>{
+    notifyParent('TEST', lastPos || {latitude:null, longitude:null}, { note: 'probe' });
+  });
+  els.btnSOS.addEventListener('click', ()=>{
+    if(lastPos){
+      notifyParent('SOS', lastPos);
+    } else {
+      // запросим текущее — и после получения отправим
+      navigator.geolocation.getCurrentPosition((pos)=>{
+        const { latitude, longitude, speed, accuracy } = pos.coords;
+        notifyParent('SOS', {latitude, longitude, speed, accuracy});
+      }, ()=>notifyParent('SOS', {latitude:null, longitude:null}));
+    }
+  });
+
+  // Автозапуск если было включено
+  if(els.toggle.checked){ onToggle(); }
+
+  // Если у вас есть роутер show(view) — откроем сохранённый или kids
+  const last = localStorage.getItem('qr_last_view');
+  document.querySelectorAll('nav a[data-view="kids"]').forEach(a=>{
+    a.addEventListener('click', (e)=> {
+      if(typeof show === 'function'){ show('kids'); }
+    });
+  });
+})();
+</script>
+  
   // ---- Router ----
   const routes = ["home","routes","places","planner","alarm","volunteer","crowd","about"];
   function setActive(view){
