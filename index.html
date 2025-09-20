@@ -44,6 +44,7 @@
   .chip{padding:8px 10px; border:1px solid var(--border); border-radius:999px; font-size:13px; cursor:pointer; background:#fff}
   .chip.active{background:var(--soft); border-color:#cfc6ff}
   .hidden{display:none !important}
+  .view{}
   .split{display:grid; grid-template-columns:1.2fr .8fr; gap:10px}
   @media(max-width:900px){ .split{grid-template-columns:1fr} }
   .hero{display:grid; grid-template-columns:1.2fr .8fr; gap:12px}
@@ -59,7 +60,7 @@
   #view-kids details { margin:12px 0; }
   #view-kids input, #view-kids select { width:100%; }
   .dino-select { display:flex; gap:16px; flex-wrap:wrap; }
-  .dino-select label { display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid #ffd1e3; border-radius:12px; cursor:pointer; }
+  .dino-select label { display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid #ffd1e3; border-radius:12px; cursor:pointer; background:#fff; }
   .dino-select img { width:44px; height:44px; display:block; }
   .dino-select input { accent-color:#ff4f8a; }
   .kid-actions { display:flex; gap:12px; margin:12px 0; }
@@ -68,8 +69,14 @@
   #btnSOS { background:#ff4f8a; color:#fff; }
   #btnSOS.sos { animation:pulse 1.6s infinite; }
   @keyframes pulse { 0%{transform:scale(1)} 50%{transform:scale(1.04)} 100%{transform:scale(1)} }
-  .kid-cursor { width:40px; height:40px; position:absolute; transform:translate(-50%,-50%); pointer-events:none; animation:bob 1.2s ease-in-out infinite; }
+
+  /* Курсор-динозавр */
+  .kid-cursor { width:44px; height:44px; position:fixed; left:-1000px; top:-1000px; transform:translate(-50%,-50%); pointer-events:none; animation:bob 1.2s ease-in-out infinite; z-index:9999; background-size:contain; background-repeat:no-repeat; }
   @keyframes bob { 0%,100%{ transform:translate(-50%,-52%)} 50%{ transform:translate(-50%,-48%)} }
+  .kid-cursor-on { cursor:none !important; }
+
+  /* Крупная карточка "О проекте" */
+  .big-card { grid-column: span 2; font-size:1.1em; line-height:1.6; }
 </style>
 </head>
 <body>
@@ -88,75 +95,78 @@
   </nav>
 </header>
 
-<!-- Детский режим -->
-<section id="view-kids" class="hidden">
-  <h2>Детский режим</h2>
-  <label class="row">
-    <input type="checkbox" id="kidModeToggle">
-    <span>Включить детский режим (отслеживание и оповещения)</span>
-  </label>
-
-  <details>
-    <summary>Настройки оповещений</summary>
-    <div class="grid">
-      <label>Способ:
-        <select id="notifyMethod">
-          <option value="telegram">Telegram Bot</option>
-          <option value="webhook">Мой Webhook URL</option>
-        </select>
-      </label>
-
-      <div id="telegramBlock">
-        <label>BOT_TOKEN
-          <input type="password" id="tgToken" placeholder="123456:ABC-DEF...">
-        </label>
-        <label>CHAT_ID
-          <input type="text" id="tgChat" placeholder="Напр. 123456789">
-        </label>
-      </div>
-
-      <div id="webhookBlock" class="hidden">
-        <label>WEBHOOK_URL
-          <input type="url" id="webhookUrl" placeholder="https://my-server.example/hook">
-        </label>
-      </div>
-
-      <label>Интервал отправки (сек.)
-        <input type="number" id="sendInterval" min="10" step="5" value="60">
-      </label>
-    </div>
-  </details>
-
-  <details>
-    <summary>Динозавр вместо стрелки</summary>
-    <div class="dino-select">
-      <label>
-        <input type="radio" name="dino" value="rex" checked>
-        <img src="data:image/svg+xml;utf8,<?xml version='1.0'?><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M8 40h20l6 6 6-6h16v8H8z' fill='%23ff4f8a'/><circle cx='24' cy='28' r='10' fill='%23ff82ab'/><circle cx='28' cy='26' r='2' fill='%23000'/></svg>" alt="Rex">
-        <span>Рекс</span>
-      </label>
-      <label>
-        <input type="radio" name="dino" value="stego">
-        <img src="data:image/svg+xml;utf8,<?xml version='1.0'?><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M6 42h24l4 4 4-4h20v6H6z' fill='%23ff4f8a'/><path d='M12 32l6-6 6 6 6-6 6 6' stroke='%23ff82ab' stroke-width='6' fill='none'/></svg>" alt="Stego">
-        <span>Стего</span>
-      </label>
-      <label>
-        <input type="radio" name="dino" value="bronto">
-        <img src="data:image/svg+xml;utf8,<?xml version='1.0'?><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M10 40h22c8 0 10-8 18-8h4v10H10z' fill='%23ff4f8a'/><path d='M40 22c6 0 6 8 6 12' stroke='%23ff82ab' stroke-width='6' fill='none'/></svg>" alt="Bronto">
-        <span>Бронто</span>
-      </label>
-    </div>
-  </details>
-
-  <div class="kid-actions">
-    <button id="btnTest">Отправить тестовое сообщение</button>
-    <button id="btnSOS" class="sos">SOS</button>
-  </div>
-
-  <p class="hint">Статус: <span id="kidStatus">выключено</span></p>
-</section>
-  
 <main>
+  <!-- Детский режим -->
+  <section id="view-kids" class="view hidden">
+    <div class="card">
+      <h2>Детский режим</h2>
+      <label class="row">
+        <input type="checkbox" id="kidModeToggle">
+        <span>Включить детский режим (отслеживание и оповещения, курсор-динозавр)</span>
+      </label>
+    </div>
+
+    <details class="card">
+      <summary><strong>Настройки оповещений</strong></summary>
+      <div class="grid">
+        <label>Способ:
+          <select id="notifyMethod">
+            <option value="telegram">Telegram Bot</option>
+            <option value="webhook">Мой Webhook URL</option>
+          </select>
+        </label>
+
+        <div id="telegramBlock">
+          <label>BOT_TOKEN
+            <input type="password" id="tgToken" placeholder="123456:ABC-DEF...">
+          </label>
+          <label>CHAT_ID
+            <input type="text" id="tgChat" placeholder="Напр. 123456789">
+          </label>
+        </div>
+
+        <div id="webhookBlock" class="hidden">
+          <label>WEBHOOK_URL
+            <input type="url" id="webhookUrl" placeholder="https://my-server.example/hook">
+          </label>
+        </div>
+
+        <label>Интервал отправки (сек.)
+          <input type="number" id="sendInterval" min="10" step="5" value="60">
+        </label>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><strong>Динозавр вместо стрелки</strong></summary>
+      <div class="dino-select">
+        <label>
+          <input type="radio" name="dino" value="rex" checked>
+          <img src="data:image/svg+xml;utf8,<?xml version='1.0'?><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M8 40h20l6 6 6-6h16v8H8z' fill='%23ff4f8a'/><circle cx='24' cy='28' r='10' fill='%23ff82ab'/><circle cx='28' cy='26' r='2' fill='%23000'/></svg>" alt="Rex">
+          <span>Рекс</span>
+        </label>
+        <label>
+          <input type="radio" name="dino" value="stego">
+          <img src="data:image/svg+xml;utf8,<?xml version='1.0'?><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M6 42h24l4 4 4-4h20v6H6z' fill='%23ff4f8a'/><path d='M12 32l6-6 6 6 6-6 6 6' stroke='%23ff82ab' stroke-width='6' fill='none'/></svg>" alt="Stego">
+          <span>Стего</span>
+        </label>
+        <label>
+          <input type="radio" name="dino" value="bronto">
+          <img src="data:image/svg+xml;utf8,<?xml version='1.0'?><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M10 40h22c8 0 10-8 18-8h4v10H10z' fill='%23ff4f8a'/><path d='M40 22c6 0 6 8 6 12' stroke='%23ff82ab' stroke-width='6' fill='none'/></svg>" alt="Bronto">
+          <span>Бронто</span>
+        </label>
+      </div>
+    </details>
+
+    <div class="card">
+      <div class="kid-actions">
+        <button id="btnTest">Отправить тестовое сообщение</button>
+        <button id="btnSOS" class="sos">SOS</button>
+      </div>
+      <p class="muted">Статус: <span id="kidStatus">выключено</span></p>
+    </div>
+  </section>
+
   <!-- HOME -->
   <section id="view-home" class="view">
     <div class="hero">
@@ -166,7 +176,7 @@
           <span class="pill"><span class="dot"></span> Астана</span>
           <button class="btn secondary" id="toggleQuiet" style="margin-left:auto">Тихая тема</button>
         </div>
-        <p>Quiet Routes — альтернативные пешеходные маршруты, которые <strong>избегают шумных/многолюдных/ярких</strong> зон и подбирают <strong>тихие места</strong>. Сделано для людей с РАС и высокой сенсорной чувствительностью. Сделайте свою доорогу спокойной и комфортной.</p>
+        <p>Quiet Routes — альтернативные пешеходные маршруты, которые <strong>избегают шумных/многолюдных/ярких</strong> зон и подбирают <strong>тихие места</strong>. Сделано для людей с РАС и высокой сенсорной чувствительностью. Сделайте свою дорогу спокойной и комфортной.</p>
         <div class="row">
           <a class="btn" href="#/routes">Построить маршрут</a>
           <a class="btn secondary" href="#/places">Тихие места</a>
@@ -400,79 +410,65 @@
     </div>
   </section>
 
-
   <!-- ABOUT -->
-<section id="view-about" class="view hidden">
-  <div class="grid">
-    <div class="card big-card">
-      <h2>О проекте</h2>
-      <p>
-        <strong>Quiet Routes Astana</strong> — некоммерческая инициатива, цель которой —
-        сделать город более безопасным и комфортным для людей с
-        расстройствами аутистического спектра (РАС). Мы хотим снизить сенсорную
-        нагрузку в городе с помощью тихих маршрутов, спокойных мест и
-        дружественной городской среды.  
-      </p>
-      <p>
-        Автор идеи и проекта — <strong>Бармина А.В.</strong>  
-        Связь: <a href="https://t.me/abastassiyabr" target="_blank">@abastassiyabr</a>
-      </p>
-    </div>
+  <section id="view-about" class="view hidden">
+    <div class="grid">
+      <div class="card big-card">
+        <h2>О проекте</h2>
+        <p>
+          <strong>Quiet Routes Astana</strong> — некоммерческая инициатива, цель которой —
+          сделать город более безопасным и комфортным для людей с
+          расстройствами аутистического спектра (РАС). Мы снижаем сенсорную
+          нагрузку с помощью тихих маршрутов, спокойных мест и
+          дружественной городской среды.
+        </p>
+        <p>
+          Автор идеи и проекта — <strong>Бармина А.В.</strong><br/>
+          Связь: <a href="https://t.me/abastassiyabr" target="_blank">@abastassiyabr</a>
+        </p>
+      </div>
 
-    <div class="card">
-      <h2>Что такое РАС?</h2>
-      <p>
-        РАС (расстройства аутистического спектра) — это особенности развития, которые
-        влияют на восприятие мира, общение и поведение человека. Людям с РАС
-        может быть трудно переносить шум, яркий свет и переполненные пространства.
-      </p>
-    </div>
+      <div class="card">
+        <h2>Что такое РАС?</h2>
+        <p>
+          РАС — особенности развития, влияющие на восприятие, общение и поведение.
+          Людям с РАС может быть трудно переносить шум, яркий свет и толпу.
+        </p>
+      </div>
 
-    <div class="card">
-      <h2>Как можно поддержать?</h2>
-      <p>
-        Каждый человек может внести вклад:  
-        — быть внимательным к личному пространству других;  
-        — поддерживать инициативы по созданию тихих зон;  
-        — помогать в распространении информации о проекте;  
-        — становиться волонтёром.  
-      </p>
-    </div>
+      <div class="card">
+        <h2>Как можно поддержать?</h2>
+        <p>
+          — уважать личное пространство;<br/>
+          — поддерживать создание тихих зон;<br/>
+          — делиться проектом;<br/>
+          — становиться волонтёром.
+        </p>
+      </div>
 
-    <div class="card">
-      <h2>Почему это важно?</h2>
-      <p>
-        Поддержка людей с РАС делает город инклюзивным и доброжелательным.  
-        Это не только снижает стресс и сенсорную перегрузку для них, но и помогает
-        всем горожанам находить спокойные и безопасные маршруты.  
-        Тихие места полезны для отдыха, восстановления и гармонии.
-      </p>
+      <div class="card">
+        <h2>Почему это важно?</h2>
+        <p>
+          Инклюзивный город снижает стресс не только для людей с РАС, но и для всех.
+          Тихие места помогают отдыхать и восстанавливаться.
+        </p>
+      </div>
     </div>
-  </div>
-</section>
-
+  </section>
 </main>
 
 <footer>
   Quiet Routes Astana · Ras · 2025
 </footer>
 
-<style>
-  /* Сделаем карточку "О проекте" побольше */
-  .big-card {
-    grid-column: span 2;
-    font-size: 1.1em;
-    line-height: 1.6;
-  }
-</style>
+<!-- Курсор-динозавр -->
+<div id="dinoMarker" class="kid-cursor hidden" aria-hidden="true"></div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   console.log("JavaScript is running 🚀");
-});
-</script>
 
-  // === Детский режим ===
+  // ===== Детский режим =====
   (function(){
     const els = {
       toggle: document.getElementById('kidModeToggle'),
@@ -489,15 +485,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     const dinoRadios = document.querySelectorAll('input[name="dino"]');
-
-    // маркер динозавра
-    let dinoMarker = document.getElementById('dinoMarker');
-    if(!dinoMarker){
-      dinoMarker = document.createElement('div');
-      dinoMarker.id = 'dinoMarker';
-      dinoMarker.className = 'kid-cursor hidden';
-      document.body.appendChild(dinoMarker);
-    }
+    const dinoMarker = document.getElementById('dinoMarker');
 
     const DINO_SVGS = {
       rex: "<?xml version='1.0'?><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M8 40h20l6 6 6-6h16v8H8z' fill='%23ff4f8a'/><circle cx='24' cy='28' r='10' fill='%23ff82ab'/><circle cx='28' cy='26' r='2' fill='%23000'/></svg>",
@@ -508,14 +496,12 @@ document.addEventListener('DOMContentLoaded', function() {
     function setDino(kind){
       const svg = DINO_SVGS[kind] || DINO_SVGS.rex;
       dinoMarker.style.backgroundImage = `url("data:image/svg+xml;utf8,${svg}")`;
-      dinoMarker.style.backgroundSize = 'contain';
-      dinoMarker.style.backgroundRepeat = 'no-repeat';
     }
 
     function updateMethodBlocks(){
-      const m = els.method.value;
-      els.telegramBlock.classList.toggle('hidden', m !== 'telegram');
-      els.webhookBlock.classList.toggle('hidden', m !== 'webhook');
+      const m = els.method?.value || 'telegram';
+      els.telegramBlock?.classList.toggle('hidden', m !== 'telegram');
+      els.webhookBlock?.classList.toggle('hidden', m !== 'webhook');
     }
 
     // загрузка настроек
@@ -560,7 +546,7 @@ document.addEventListener('DOMContentLoaded', function() {
       els.sendInterval?.addEventListener(ev, save);
     });
 
-    // геолокация
+    // Геолокация и оповещения
     let watchId = null;
     let lastSent = 0;
     let lastPos = null;
@@ -592,19 +578,6 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
 
-    function onToggle(){
-      const opts = save();
-      if(opts.enabled){
-        startTracking();
-        els.status && (els.status.textContent = 'включено');
-        dinoMarker.classList.remove('hidden');
-      }else{
-        stopTracking();
-        els.status && (els.status.textContent = 'выключено');
-        dinoMarker.classList.add('hidden');
-      }
-    }
-
     function startTracking(){
       if(!('geolocation' in navigator)){
         alert('Геолокация не поддерживается браузером');
@@ -616,9 +589,6 @@ document.addEventListener('DOMContentLoaded', function() {
       watchId = navigator.geolocation.watchPosition(async (pos)=>{
         const { latitude, longitude, speed, accuracy } = pos.coords;
         lastPos = { latitude, longitude, speed, accuracy };
-        // позиция курсора-динозавра (для демо — центр)
-        dinoMarker.style.left = '50%';
-        dinoMarker.style.top = '50%';
 
         const now = Date.now();
         const interval = Math.max(10, parseInt(els.sendInterval?.value||60,10))*1000;
@@ -642,20 +612,61 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
 
+    // Курсор-динозавр: следуем за мышью/тачем, скрываем системный курсор
+    function enableDinoCursor(){
+      document.body.classList.add('kid-cursor-on');
+      dinoMarker.classList.remove('hidden');
+      const move = (x,y)=>{ dinoMarker.style.left = x + 'px'; dinoMarker.style.top = y + 'px'; };
+      window.__kidMouseMove = (e)=> move(e.clientX, e.clientY);
+      window.__kidTouchMove = (e)=>{ const t=e.touches[0]; if(t) move(t.clientX, t.clientY); };
+      window.addEventListener('mousemove', window.__kidMouseMove);
+      window.addEventListener('touchmove', window.__kidTouchMove, {passive:true});
+    }
+    function disableDinoCursor(){
+      document.body.classList.remove('kid-cursor-on');
+      dinoMarker.classList.add('hidden');
+      if(window.__kidMouseMove){ window.removeEventListener('mousemove', window.__kidMouseMove); window.__kidMouseMove=null; }
+      if(window.__kidTouchMove){ window.removeEventListener('touchmove', window.__kidTouchMove); window.__kidTouchMove=null; }
+      dinoMarker.style.left='-1000px'; dinoMarker.style.top='-1000px';
+    }
+
+    function onToggle(){
+      const opts = save();
+      if(opts.enabled){
+        startTracking();
+        els.status && (els.status.textContent = 'включено');
+        enableDinoCursor();
+      }else{
+        stopTracking();
+        els.status && (els.status.textContent = 'выключено');
+        disableDinoCursor();
+      }
+    }
+
     els.btnTest?.addEventListener('click', ()=>{
       notifyParent('TEST', lastPos || {latitude:null, longitude:null}, { note: 'probe' });
     });
     els.btnSOS?.addEventListener('click', ()=>{
       if(lastPos){
         notifyParent('SOS', lastPos);
-      } else {
+      } else if(navigator.geolocation){
         navigator.geolocation.getCurrentPosition((pos)=>{
           const { latitude, longitude, speed, accuracy } = pos.coords;
           notifyParent('SOS', {latitude, longitude, speed, accuracy});
         }, ()=>notifyParent('SOS', {latitude:null, longitude:null}));
+      } else {
+        notifyParent('SOS', {latitude:null, longitude:null});
       }
     });
 
+    // применяем текущий выбор динозавра
+    dinoRadios.forEach(r=>r.addEventListener('change', ()=>{
+      const v = r.value;
+      setDino(v);
+      const s = JSON.parse(localStorage.getItem('kid_opts')||'{}'); s.dino = v; localStorage.setItem('kid_opts', JSON.stringify(s));
+    }));
+
+    // автозапуск если было включено
     if(els.toggle?.checked){ onToggle(); }
   })();
 
@@ -814,7 +825,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   document.getElementById('aShare')?.addEventListener('click', ()=>{ const st=document.getElementById('aStatus'); if(st) st.textContent='Ссылка на маршрут отправлена доверенному контакту.'; });
   document.getElementById('aHelp')?.addEventListener('click', ()=>alert('Советы: отойти от дороги/экрана, наушники/беруши, дыхание 4-4-6.'));
-  document.getElementById['aMeet']?.addEventListener?.('click', ()=>alert('Точка встречи: у входа №2.'));
+  document.getElementById('aMeet')?.addEventListener('click', ()=>alert('Точка встречи: у входа №2.'));
 
   document.getElementById('vOpen')?.addEventListener('click', ()=>alert('Экран волонтёра открыт (демо).'));
   document.getElementById('codeOk')?.addEventListener('click', ()=>{
